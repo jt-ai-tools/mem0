@@ -1,0 +1,1282 @@
+---
+title: "產品更新"
+mode: "wide"
+---
+
+ 
+<Tabs>
+<Tab title="Python">
+
+<Update label="2026-01-29" description="v1.0.3">
+
+**新功能與更新：**
+- **專案設定：**
+  - 新增包含提示詞、排除提示詞、記憶深度以及使用情境設定。
+
+</Update>
+
+<Update label="2026-01-13" description="v1.0.2">
+
+**新功能與更新：**
+- **向量儲存：**
+  - 為 MongoDB 向量儲存新增 DriverInfo 元數據。
+
+</Update>
+
+<Update label="2025-11-14" description="v1.0.1">
+
+**新功能與更新：**
+- **向量儲存：**
+  - 新增 Apache Cassandra 向量儲存支援。
+- **嵌入向量：**
+  - 為本地嵌入新增 FastEmbed 支援。
+- **圖形儲存：**
+  - 為圖形儲存節點比對新增可配置的嵌入相似度閾值。
+
+**錯誤修正：**
+- **核心：**
+  - 修正 Memory 類別中 memories_result 類型的條件檢查。
+  - 修正 list_memories 端點的 Pydantic 驗證錯誤。
+  - 修正記憶刪除時未從向量儲存中移除的問題。
+
+</Update>
+
+<Update label="2025-10-16" description="v1.0.0">
+
+**新功能與更新：**
+- **向量儲存：**
+  - 新增 Azure MySQL 支援。
+  - 新增 Azure AI Search 向量儲存支援。
+- **LLM：**
+  - 為 LangchainLLM 新增工具呼叫 (Tool Call) 支援。
+  - 透過 huggingface_base_url 啟用 Hugging Face 的自定義模型與參數。
+  - 更新預設 LLM 配置。
+- **重新排序器 (Rerankers)：**
+  - 新增重新排序器支援：Cohere、ZeroEntropy、Hugging Face、Sentence Transformers 及 LLM。
+- **核心：**
+  - 為開源版新增元數據過濾功能。
+  - 新增助手 (Assistant) 記憶檢索。
+  - 預設啟用非同步模式。
+
+**改進：**
+- **提示詞：**
+  - 改進提示詞以獲得更好的記憶檢索效果。
+- **依賴項目：**
+  - 更新與 OpenAI 2.x 的依賴相容性。
+- **驗證：**
+  - 針對 Kuzu 整合驗證 embedding_dims。
+
+**錯誤修正：**
+- **向量儲存：**
+  - 修正 Databricks 向量儲存整合。
+  - 修正 Milvus DB 錯誤並增加測試覆蓋率。
+  - 修正 Weaviate 搜尋方法。
+- **LLM：**
+  - 修正 vLLM 中思考型 LLM 的錯誤。
+
+</Update>
+
+<Update label="2025-09-25" description="v0.1.118">
+
+**新功能與更新：**
+- **向量儲存：**
+  - 新增 Valkey 向量儲存支援。
+  - 新增對 ChromaDB Cloud 的支援。
+  - 為 Neptune Analytics 整合 mem0 向量儲存後端。
+- **圖形儲存：**
+  - 新增具備向量儲存功能的 Neptune-DB 圖形儲存。
+- **核心：**
+  - 實作具備錯誤代碼與建議操作的結構化異常類別。
+
+**改進：**
+- **依賴項目：**
+  - 更新 OpenAI 依賴並改進 Ollama 相容性。
+- **測試：**
+  - 新增 Weaviate DB 測試。
+  - 為 SQLiteManager 新增全面的測試套件。
+- **文件：**
+  - 更新類別文件。
+  - 更新 Search V2 / Get All V2 過濾器文件。
+  - 重構 AWS 範例標題。
+  - 修正快速上手中的 cURL 範例。
+
+**錯誤修正：**
+- **向量儲存：**
+  - Databricks 錯誤修正。
+  - 修正從配置進行 S3 向量記憶初始化的問題。
+- **核心：**
+  - 修正新記憶的 JSON 解析問題。
+  - 將硬編碼的 LLM 提供商替換為來自配置的提供商。
+- **LLM：**
+  - 修正 Bedrock Anthropic 模型以使用 system 欄位。
+
+</Update>
+
+<Update label="2025-09-03" description="v0.1.117">
+
+**新功能與更新：**
+- **OpenMemory：**
+  - 新增記憶導出 / 匯入功能。
+  - 新增向量儲存整合：Weaviate、FAISS、PGVector、Chroma、Redis、Elasticsearch、Milvus。
+  - 新增 `export_openmemory.sh` 遷移指令碼。
+- **向量儲存：**
+  - 新增 Amazon S3 向量支援。
+  - 新增 Databricks Mosaic AI 向量儲存支援。
+  - 新增對 OpenAI Store 的支援。
+- **圖形記憶：** 新增使用 Kuzu 的圖形記憶支援。
+- **Azure：** 新增用於 Azure OpenAI 和 Azure AI Search 驗證的 Azure Identity。
+- **Elasticsearch：** 新增標頭配置支援。
+
+**改進：**
+  - 新增自定義連線客戶端，以支援連線至本地 Weaviate 容器。
+  - 更新 AWS Bedrock 配置。
+  - 修正依賴問題與測試；更新 Docstrings。
+- **文件：**
+  - 修正側邊欄中缺失的圖形文件頁面。
+  - 更新整合文件。
+  - 在 Search V2 API 文件中新增版本參數。
+  - 更新 Databricks 文件並重構文件結構。
+  - 更新 Favicon 圖示。
+  - 修正錯字與 TypeScript 文件。
+
+**錯誤修正：**
+- **Baidu：** 新增缺失的百度向量資料庫提供商。
+- **MongoDB：** 替換搜尋方法中的 `query_vector` 參數。
+- **核心：** 修正將新記憶誤認為當前記憶的問題。
+- **核心：** 處理 AsyncMemory._add_to_vector_store 在未找到事實時的邊際情況。
+- **圖形：** 修正 Kuzu 圖形 INSERT 查詢中缺失的逗號。
+- **圖形：** 修正圖形一致的建立與更新屬性。
+- **Neptune Analytics：** 修正客戶端上缺失的 `app_id`。
+- **AWS：** 正確從環境變數中選取 AWS 區域。
+- **Ollama：** 修正 Ollama 模型存在檢查。
+
+**重構：**
+- **PGVector：** 使用內部連線池與上下文管理器。
+
+</Update>
+
+<Update label="2025-08-14" description="v0.1.116">
+
+**新功能與更新：**
+- **Pinecone：** 新增命名空間支援並提升類型安全性。
+- **Milvus：** 在 MilvusDBConfig 中新增 db_name 欄位。
+- **向量儲存：** 新增多 ID 過濾器支援。
+- **Vercel AI SDK：** 遷移至 AI SDK V5.0。
+- **Python 支援：** 新增 Python 3.12 支援。
+- **圖形記憶：** 為節點與關係新增清理 (Sanitizer) 方法。
+- **LLM 監控：** 新增監控回呼 (Callback) 支援。
+
+**改進：**
+- **效能：**
+  - 改進 AsyncMemory 類別中的非同步處理。
+- **文件：**
+  - 新增非同步新增公告。
+  - 新增個人化搜尋文件。
+  - 新增 Neptune 範例。
+  - 新增 V5 遷移文件。
+- **配置：**
+  - 重構 LLM 的基礎類別配置。
+  - 為 pgvector 新增 sslmode。
+- **依賴項目：**
+  - 更新 psycopg 至第 3 版。
+  - 更新 Docker compose。
+
+**錯誤修正：**
+- **測試：**
+  - 修正失敗的測試。
+  - 限制套件版本。
+- **Memgraph：**
+  - 修正非同步屬性錯誤。
+  - 修正 n_embeddings 使用方式。
+  - 修正索引問題。
+- **向量儲存：**
+  - 修正 Qdrant 雲端索引。
+  - 修正 Neo4j Cypher 語法。
+  - 修正 LLM 參數。
+- **圖形儲存：**
+  - 修正 LM 配置優先級。
+- **依賴項目：**
+  - 修正 psycopg 的 JSON 匯入。
+
+**重構：**
+- **Google AI：** 從 Gemini 重構為 Google AI。
+- **基礎類別：** 重構 LLM 基礎類別配置。
+
+</Update>
+
+<Update label="2025-07-24" description="v0.1.115">
+
+**新功能與更新：**
+- 透過 `client.project` 和 `AsyncMemoryClient.project` 介面增強專案管理。
+- 完整支援專案 CRUD 操作（建立、讀取、更新、刪除）。
+- 專案成員管理：新增、更新、移除及列出成員。
+- 管理專案設定，包括自定義指令、類別、檢索條件以及圖形啟用。
+- 所有專案管理操作皆支援同步與非同步。
+
+**改進：**
+- **文件：**
+  - 為新的專案管理方法新增詳細的 API 參考與使用範例。
+  - 更新所有文件以使用 `client.project.get()` 和 `client.project.update()` 取代棄用的方法。
+  
+- **棄用：**
+  - 將 `get_project()` 和 `update_project()` 標記為棄用（這些方法已存在）；新增警告以引導使用者使用新 API。
+
+**錯誤修正：**
+- **測試：**
+  - 修正 Gemini 嵌入器與 LLM 的測試模擬 (Mocks)，以確保正確的錯誤處理與參數結構。
+- **vLLM：**
+  - 修正 vLLM 模組中重複匯入的問題。
+
+</Update>
+
+<Update label="2025-07-05" description="v0.1.114">
+
+**新功能：**
+- **OpenAI Agents：** 新增 OpenAI agents SDK 支援。
+- **Amazon Neptune：** 新增 Amazon Neptune Analytics graph_store 配置與整合。
+- **vLLM：** 新增 vLLM 支援。
+
+**改進：**
+- **文件：** 
+  - 新增 SOC2 與 HIPAA 合規性文件。
+  - 增強平台群組聊天功能的文件。
+  - 新增 Google AI ADK 整合文件。
+  - 修正文件圖片與連結。
+- **設定：** 修正 mem0 設定、日誌紀錄與文件問題。
+
+**錯誤修正：**
+- **MongoDB：** 修正 MongoDB 向量儲存對齊錯誤的字串與類別。
+- **vLLM：** 修正 vLLM 模組中缺失的 OpenAI 匯入與呼叫錯誤。
+- **依賴項目：** 修正與缺失依賴相關的 CI 問題。
+- **安裝：** 還原 pip install 的變動。
+
+</Update>
+
+<Update label="2025-06-30" description="v0.1.113">
+
+**錯誤修正：**
+- **Gemini：** 修正 Gemini 嵌入器配置。
+
+</Update>
+
+<Update label="2025-06-27" description="v0.1.112">
+
+**新功能：**
+- **記憶：** 為 add 方法新增不可變 (immutable) 參數。
+- **OpenMemory：** 新增 async_mode 參數支援。
+
+**改進：**
+- **文件：** 
+  - 增強平台功能文件。
+  - 修正文件連結。
+  - 新增 async_mode 文件。
+- **MongoDB：** 修正 MongoDB 配置名稱。
+
+**錯誤修正：**
+- **Bedrock：** 修正 Bedrock LLM、嵌入向量、工具與暫時性憑證。
+- **記憶：** 透過更新依賴並更正 API 使用方式來修正記憶分類。
+- **Gemini：** 修正 Gemini 嵌入向量與 LLM 問題。
+
+</Update>
+
+<Update label="2025-06-23" description="v0.1.111">
+
+**新功能：**
+- **OpenMemory：** 
+  - 新增 OpenMemory 增強 (augment) 支援。
+  - 使用新函式庫新增 OpenMemory 本地支援。
+- **vLLM：** 新增 vLLM 支援整合。
+
+**改進：**
+- **文件：** 
+  - 新增 MCP 客戶端整合指南並更新安裝指令。
+  - 改進 mem0 開源版圖形記憶的 Agent Id 文件。
+- **核心：** 新增 JSON 解析以解決幻覺錯誤。
+
+**錯誤修正：**
+- **Gemini：** 修正 Gemini 嵌入向量遷移。
+
+</Update>
+
+<Update label="2025-06-20" description="v0.1.110">
+
+**新功能：**
+- **Baidu：** 新增百度向量資料庫整合。
+
+**改進：**
+- **文件：** 
+  - 更新變更日誌。
+  - 修正快速上手頁面中的範例。
+  - 更新 OpenAPI 規範中的 client.update() 方法文件。
+- **OpenSearch：** 更新日誌紀錄警告。
+
+**錯誤修正：**
+- **CI：** 修正失敗的 CI 流水線。
+
+</Update>
+
+<Update label="2025-06-19" description="v0.1.109">
+
+**新功能：**
+- **AgentOps：** 新增 AgentOps 整合。
+- **LM Studio：** 為 LM Studio 配置新增 response_format 參數。
+- **範例：** 新增語音驅動的記憶代理 (Cartesia + Agno)。
+
+**改進：**
+- **AI SDK：** 新增 output_format 參數。
+- **客戶端：** 增強 update 方法以支援元數據。
+- **Google：** 新增 Google Genai 函式庫支援。
+
+**錯誤修正：**
+- **構建：** 修正 Build CI 失敗問題。
+- **Pinecone：** 修正用於非同步記憶的 Pinecone。
+
+</Update>
+
+<Update label="2025-06-14" description="v0.1.108">
+
+**新功能：**
+- **MongoDB：** 新增 MongoDB 向量儲存支援。
+- **客戶端：** 為摘要 (summary) 功能新增客戶端支援。
+
+**改進：**
+- **Pinecone：** 修正 Pinecone 版本問題。
+- **OpenSearch：** 新增日誌紀錄支援。
+- **測試：** 新增 Python 版本測試環境。
+
+</Update>
+
+<Update label="2025-06-11" description="v0.1.107">
+
+**改進：**
+- **文件：**
+  - 更新 Livekit 文件遷移。
+  - 更新 OpenMemory 託管版本文件。
+- **核心：** 更新分類流程。
+- **儲存：** 修正遷移問題。
+
+</Update>
+
+<Update label="2025-06-09" description="v0.1.106">
+
+**新功能：**
+- **Cloudflare：** 新增 Cloudflare 向量儲存支援。
+- **搜尋：** 為搜尋功能新增閾值 (threshold) 參數。
+- **API：** 為 V2 記憶 API 新增通配符支援。
+
+**改進：**
+- **文件：** 更新 README 中的 OpenMemory 環境設定文件。
+- **核心：** 新增對唯一使用者 ID 的支援。
+
+**錯誤修正：**
+- **核心：** 修正錯誤處理異常。
+
+</Update>
+
+<Update label="2025-06-03" description="v0.1.104">
+
+**錯誤修正：**
+- **向量儲存：** 修正 FAISS 與 OpenSearch 的 GET_ALL 功能。
+
+</Update>
+
+<Update label="2025-06-02" description="v0.1.103">
+
+**新功能：**
+- **LLM：** 新增對具備 baseUrl 配置的 OpenAI 相容 LLM 提供商支援。
+
+**改進：**
+- **文件：**
+  - 修正損壞的連結。
+  - 提升圖形記憶功能文件的清晰度。
+  - 更新 enable_graph 文件。
+- **TypeScript SDK：** 更新 Google SDK 同級依賴 (peer dependency) 版本。
+- **客戶端：** 新增非同步模式參數。
+
+</Update>
+
+<Update label="2025-05-26" description="v0.1.102">
+
+**新功能：**
+- **範例：** 新增 Neo4j 範例。
+- **AI SDK：** 新增 Google 提供商支援。
+- **OpenMemory：** 新增 LLM 與嵌入向量提供商支援。
+
+**改進：**
+- **文件：**
+  - 更新記憶導出文件。
+  - 增強基於角色的記憶歸因規則文件。
+  - 更新 API 參考與訊息文件。
+  - 新增 Mastra 與 Raycast 文件。
+  - 為 Search 和 GetAll V2 新增 NOT 過濾器文件。
+  - 公布 Claude 4 支援。
+- **核心：**
+  - 移除 client.add() 中傳遞字串作為輸入的支援。
+  - 新增對 sarvam-m 模型的支援。
+- **TypeScript SDK：** 修正訊息介面的類型。
+
+**錯誤修正：**
+- **記憶：** 在沒有新事實存在時，防止將提示詞構件儲存為記憶。
+- **OpenMemory：** 修正 MCP 工具描述中的錯字。
+
+</Update>
+
+<Update label="2025-05-15" description="v0.1.101">
+
+**新功能：**
+- **Neo4j：** 新增基礎標籤配置支援。
+
+**改進：**
+- **文件：**
+  - 更新醫療保健範例索引。
+  - 提升協作任務代理文件的清晰度。
+  - 新增基於準則的過濾文件。
+- **OpenMemory：** 新增 cURL 指令以方便安裝。
+- **構建：** 遷移至 Hatch 構建系統。
+
+</Update>
+
+<Update label="2025-05-10" description="v0.1.100">
+
+**新功能：**
+- **記憶：** 新增群組聊天記憶功能支援。
+- **範例：** 新增使用 mem0 與 Google ADK 的醫療助手。
+
+**錯誤修正：**
+- **SSE：** 修正 SSE 連線問題。
+- **MCP：** 修正從控制面板新增的記憶未出現在 MCP 客戶端的問題。
+
+</Update>
+
+<Update label="2025-05-07" description="v0.1.99">
+
+**新功能：**
+- **OpenMemory：** 新增 OpenMemory 支援。
+- **Neo4j：** 為 Neo4j 模型新增權重。
+- **AWS：** 新增對 Opsearch Serverless 的支援。
+- **範例：** 新增 ElizaOS 範例。
+
+**改進：**
+- **文件：** 更新 Azure AI 文件。
+- **AI SDK：** 新增缺失的參數並更新示範應用程式。
+- **開源版：** 修正 AOSS 與 AWS BedRock LLM。
+
+</Update>
+
+<Update label="2025-04-30" description="v0.1.98">
+
+**新功能：**
+- **Neo4j：** 新增對 Neo4j 資料庫的支援。
+- **AWS：** 新增對 AWS Bedrock 嵌入向量的支援。
+
+**改進：**
+- **客戶端：** 更新 delete_users() 以使用 V2 API 端點。
+- **文件：** 更新時間戳記與雙重身份記憶管理文件。
+- **Neo4j：** 改進 Neo4j 查詢並移除警告。
+- **AI SDK：** 新增服務降級時的優雅失敗支援。
+
+**錯誤修正：**
+- 修正 AI SDK 過濾器。
+- 修正新記憶類型錯誤。
+- 修正新增/更新記憶時重複元數據的問題。
+
+</Update>
+
+<Update label="2025-04-23" description="v0.1.97">
+
+**新功能：**
+- **HuggingFace：** 新增對 HF 推理的支援。
+
+**錯誤修正：**
+- 修正 mem0 的代理伺服器。
+
+</Update>
+
+<Update label="2025-04-16" description="v0.1.96">
+
+**新功能：**
+- **Vercel AI SDK：** 新增圖形記憶支援。
+
+**改進：**
+- **文件：** 修正時間戳記與 README 連結。
+- **客戶端：** 更新 TS 客戶端以為 deleteUsers 使用正確類型。
+- **依賴項目：** 從基礎套件中移除不必要的依賴。
+
+</Update>
+
+<Update label="2025-04-09" description="v0.1.95">
+
+**改進：**
+- **客戶端：** 修正 Ping 方法以使用預設的 org_id 與 project_id。
+- **文件：** 更新文件。
+
+**錯誤修正：**
+- 修正 mem0-migrations 問題。
+
+</Update>
+
+<Update label="2025-04-26" description="v0.1.94">
+
+**新功能：**
+- **整合：** 新增 Memgraph 整合。
+- **記憶：** 新增時間戳記支援。
+- **向量儲存：** 為向量資料庫新增重置功能。
+
+**改進：**
+- **文件：**
+  - 更新時間戳記與 expiration_date 文件。
+  - 修正 V2 搜尋文件。
+  - 在 EC "Custom config" 部分新增 "memory"。
+  - 修正 JSON 配置範例中的錯字。
+
+</Update>
+
+<Update label="2025-04-21" description="v0.1.93">
+
+**改進：**
+- **向量儲存：** 在所有向量資料庫中初始化 embedding_model_dims。
+
+**錯誤修正：**
+- **文件：** 修正 agno 連結。
+
+</Update>
+
+<Update label="2025-04-18" description="v0.1.92">
+
+**新功能：**
+- **記憶：** 新增記憶重置功能。
+- **客戶端：** 新增自定義指令支援。
+- **範例：** 新增語音驅動的健身檢查工具。
+
+**改進：**
+- **核心：** 更新 capture_event。
+- **文件：** 修正 V2 get_all 的 curl 範例。
+
+**錯誤修正：**
+- **向量儲存：** 修正 user_id 功能。
+- **客戶端：** 多項客戶端改進。
+
+</Update>
+
+<Update label="2025-04-16" description="v0.1.91">
+
+**新功能：**
+- **LLM 整合：** 新增 Azure OpenAI 嵌入向量模型。
+- **範例：**
+  - 使用 grok3 新增電影推薦範例。
+  - 使用 Elevenlabs 新增語音助手範例。
+
+**改進：**
+- **文件：**
+  - 新增 Keywords AI。
+  - 重新格式化導覽列頁面 URL。
+  - 更新變更日誌。
+  - 更新 openai.mdx。
+- **FAISS：** 靜默 FAISS 資訊日誌。
+
+</Update>
+
+<Update label="2025-04-11" description="v0.1.90">
+
+**新功能：**
+- **LLM 整合：** 新增 Mistral AI 作為 LLM 提供商。
+
+**改進：**
+- **文件：**
+  - 更新變更日誌。
+  - 修正記憶排除範例。
+  - 更新 xAI 文件。
+  - 更新 YouTube Chrome 擴充功能範例文件。
+
+**錯誤修正：**
+- **核心：** 修正 GraphMemory 中的 EmbedderFactory.create()。
+- **Azure OpenAI：** 新增修補程式以修正 Azure OpenAI。
+- **遙測 (Telemetry)：** 修正遙測問題。
+
+</Update>
+
+<Update label="2025-04-11" description="v0.1.89">
+
+**新功能：**
+- **Langchain 整合：** 新增對 Langchain VectorStores 的支援。
+- **範例：**
+  - 新增個人助手範例。
+  - 新增個人學習夥伴範例。
+  - 新增 YouTube 助手 Chrome 擴充功能範例。
+  - 新增 agno 範例。
+  - 更新 OpenAI Responses API 範例。
+- **向量儲存：** 新增在向量資料庫中儲存 user_id 的能力。
+- **非同步記憶：** 為開源版新增非同步支援。
+
+**改進：**
+- **文件：** 更新格式與範例。
+
+</Update>
+
+<Update label="2025-04-09" description="v0.1.87">
+
+**新功能：**
+- **Upstash Vector：** 新增 Upstash Vector 儲存支援。
+
+**改進：**
+- **程式碼品質：** 移除多餘的程式碼。
+- **構建：** 更新 MAKEFILE。
+- **文件：** 更新記憶導出文件。
+
+</Update>
+
+<Update label="2025-04-07" description="v0.1.86">
+
+**改進：**
+- **FAISS：** 在 FAISS 向量儲存中新增 embedding_dims 參數。
+
+</Update>
+
+<Update label="2025-04-07" description="v0.1.84">
+
+**新功能：**
+- **Langchain 嵌入器：** 新增 Langchain 嵌入器整合。
+
+**改進：**
+- **Langchain LLM：** 更新 Langchain LLM 整合以直接傳遞 Langchain 物件 LLM。
+</Update>
+
+<Update label="2025-04-07" description="v0.1.83">
+
+**錯誤修正：**
+- **Langchain LLM：** 修正 Langchain LLM 整合問題。
+</Update>
+
+<Update label="2025-04-07" description="v0.1.82">
+
+**新功能：**
+- **LLM 整合：** 新增對 Langchain LLM 的支援，以及 Google 作為新 LLM 與嵌入器。
+- **開發：** 新增開發用 Docker Compose。
+
+**改進：**
+- **輸出格式：** 設定 output_format='v1.1' 並更新文件。
+
+**文件：**
+- **整合：** 新增 LMStudio 與 Together.ai 文件。
+- **API 參考：** 更新 output_format 文件。
+- **整合：** 新增 PipeCat 整合文件。
+- **整合：** 新增 Flowise 整合文件。
+
+**錯誤修正：**
+- **測試：** 修正失敗的單元測試。
+</Update>
+
+<Update label="2025-04-02" description="v0.1.79">
+
+**新功能：**
+- **FAISS 支援：** 新增 FAISS 向量儲存支援。
+
+</Update>
+
+<Update label="2025-04-02" description="v0.1.78">
+
+**新功能：**
+- **Livekit 整合：** 新增 mem0 Livekit 範例。
+- **評估：** 新增評估框架與工具。
+
+**文件：**
+- **多模態：** 更新多模態文件。
+- **範例：** 新增電子郵件處理範例。
+- **API 參考：** 更新 API 參考章節。
+- **Elevenlabs：** 新增 Elevenlabs 整合範例。
+
+**錯誤修正：**
+- **OpenAI 環境變數：** 修正 OpenAI 環境變數問題。
+- **部署錯誤：** 新增 `package.json` 檔案以修正部署錯誤。
+- **工具：** 修正工具問題並改進格式。
+- **文件：** 更新 `expiration date` 的 API 參考章節。
+</Update>
+
+<Update label="2025-03-26" description="v0.1.77">
+
+**錯誤修正：**
+- **OpenAI 環境變數：** 修正 OpenAI 環境變數問題。
+- **部署錯誤：** 新增 `package.json` 檔案以修正部署錯誤。
+- **工具：** 修正工具問題並改進格式。
+- **文件：** 更新 `expiration date` 的 API 參考章節。
+</Update>
+
+<Update label="2025-03-19" description="v0.1.76">
+**新功能：**
+- **Supabase 向量儲存：** 新增 Supabase 向量儲存支援。
+- **Supabase 歷史資料庫：** 新增 Supabase 歷史資料庫，以在 Serverless 環境執行 mem0 開源版。
+- **回饋方法：** 為客戶端新增回饋 (Feedback) 方法。
+
+**錯誤修正：**
+- **Azure OpenAI：** 修正 Azure OpenAI 問題。
+- **Azure AI Search：** 修正 Azure AI Search 測試案例。
+</Update>
+
+</Tab>
+
+<Tab title="TypeScript">
+
+<Update label="2026-01-29" description="v2.2.2">
+
+**新功能與更新：**
+- **專案設定：**
+  - 新增包含提示詞、排除提示詞、記憶深度以及使用情境設定。
+
+</Update>
+
+<Update label="2025-12-30" description="v2.2.1">
+
+**改進：**
+- **客戶端：** 在 `add` 與 `search` 方法中新增關鍵字參數支援，允許針對實驗性功能使用定義選項之外的額外屬性。
+
+</Update>
+
+<Update label="2025-12-29" description="v2.2.0">
+
+**新功能：**
+- **向量儲存：** 新增 Azure AI Search 向量儲存支援。
+
+**改進：**
+- **配置：** 修正嵌入器配置 Schema 以支援 `embeddingDims` 與 `url` 參數。
+- **圖形記憶：** 將硬編碼的 LLM 提供商替換為來自配置的提供商。
+
+**錯誤修正：**
+- **嵌入器：** 修正嵌入器（OpenAI, Ollama, Google, Azure）中硬編碼的 `embeddingDims` 值。
+- **構建：** 修正 TypeScript 構建錯誤。
+
+</Update>
+
+<Update label="2025-09-04" description="v2.1.38">
+**新功能：**
+- **客戶端：** 為 `update` 方法新增 `metadata` 參數。
+</Update>
+
+<Update label="2025-08-04" description="v2.1.37">
+**新功能：**
+- **開源版：** 新增 `RedisCloud` 搜尋模組檢查。
+</Update>
+
+<Update label="2025-07-08" description="v2.1.36">
+**新功能：**
+- **客戶端：** 為 `add` 方法新增 `structured_data_schema` 參數。
+</Update>
+
+<Update label="2025-07-08" description="v2.1.35">
+**新功能：**
+- **客戶端：** 新增 `createMemoryExport` 與 `getMemoryExport` 方法。
+</Update>
+
+<Update label="2025-07-03" description="v2.1.34">
+**新功能：**
+- **開源版：** 新增 Gemini 支援。
+</Update>
+
+<Update label="2025-06-24" description="v2.1.33">
+**改進：**
+- **客戶端：** 為 `add` 方法新增 `immutable` 參數。
+</Update>
+
+<Update label="2025-06-20" description="v2.1.32">
+**改進：**
+- **客戶端：** 將 `api_version` V2 設為預設。
+</Update>
+
+<Update label="2025-06-17" description="v2.1.31">
+**改進：**
+- **客戶端：** 新增 `filter_memories` 參數。
+</Update>
+
+<Update label="2025-06-06" description="v2.1.30">
+**新功能：**
+- **開源版：** 新增 Cloudflare 支援。
+
+**改進：**
+- **開源版：** 修正 LLM 配置中的 baseURL 參數。
+</Update>
+
+<Update label="2025-05-30" description="v2.1.29">
+**改進：**
+- **客戶端：** 為 `add` 方法新增非同步模式參數。
+</Update>
+
+<Update label="2025-05-30" description="v2.1.28">
+**改進：**
+- **SDK：** 更新 Google SDK 同級依賴版本。
+</Update>
+
+<Update label="2025-05-27" description="v2.1.27">
+**改進：**
+- **開源版：** 在 LLM 配置中新增 baseURL 參數。
+</Update>
+<Update label="2025-05-23" description="v2.1.26">
+**改進：**
+- **客戶端：** 從 `messages` 介面中移除 `string` 類型。
+</Update>
+
+<Update label="2025-05-08" description="v2.1.25">
+**改進：**
+- **客戶端：** 改進客戶端錯誤處理。
+</Update>
+
+<Update label="2025-05-06" description="v2.1.24">
+**新功能：**
+- **客戶端：** 新增 `output_format` 參數以與 Python SDK 保持一致。
+- **客戶端：** 為 `v1.0` 與 `v1.1` 新增 `OutputFormat` 列舉。
+</Update>
+
+<Update label="2025-05-05" description="v2.1.23">
+**新功能：**
+- **客戶端：** 更新 `deleteUsers` 以使用 `v2` API。
+- **客戶端：** 棄用 `deleteUser` 並新增棄用警告。
+</Update>
+
+<Update label="2025-05-02" description="v2.1.22">
+**新功能：**
+- **客戶端：** 更新 `deleteUser` 以使用 `entity_id` 與 `entity_type`。
+</Update>
+
+<Update label="2025-05-01" description="v2.1.21">
+**改進：**
+- **開源版 SDK：** 將 `@anthropic-ai/sdk` 版本提升至 `0.40.1`。
+</Update>
+
+<Update label="2025-04-28" description="v2.1.20">
+**改進：**
+- **客戶端：** 修正 `ping` 方法中 `organizationId` 與 `projectId` 被分配為預設值的問題。
+</Update>
+
+<Update label="2025-04-22" description="v2.1.19">
+**改進：**
+- **客戶端：** 新增 `timestamps` 支援。
+</Update>
+
+<Update label="2025-04-17" description="v2.1.18">
+**改進：**
+- **客戶端：** 新增自定義指令支援。
+</Update>
+
+<Update label="2025-04-15" description="v2.1.17">
+**新功能：**
+- **開源版 SDK：** 新增對 Langchain LLM 的支援。
+- **開源版 SDK：** 新增對 Langchain 嵌入器的支援。
+- **開源版 SDK：** 新增對 Langchain 向量儲存的支援。
+- **開源版 SDK：** 新增對 Azure OpenAI 嵌入器的支援。
+
+
+**改進：**
+- **開源版 SDK：** 將 LLM 與嵌入器中的 `model` 類型從 `string` 改為 `any`，以支援 Langchain 模型。
+- **開源版 SDK：** 為 Langchain 向量儲存配置新增客戶端。
+- **開源版 SDK：** 更新 Azure OpenAI 以使用新版 OpenAI SDK。
+</Update>
+
+<Update label="2025-04-11" description="v2.1.16-patch.1">
+**錯誤修正：**
+- **Azure OpenAI：** 修正 Azure OpenAI 問題。
+</Update>
+
+<Update label="2025-04-11" description="v2.1.16">
+**新功能：**
+- **Azure OpenAI：** 新增 Azure OpenAI 支援。
+- **Mistral LLM：** 在開源版中新增 Mistral LLM 整合。
+
+**改進：**
+- **Zod：** 更新 Zod 至 3.24.1 以避免與其他套件衝突。
+</Update>
+
+<Update label="2025-04-09" description="v2.1.15">
+**改進：**
+- **客戶端：** 新增對 mem0 在 Chrome 擴充功能中運作的支援。
+</Update>
+
+<Update label="2025-04-01" description="v2.1.14">
+**新功能：**
+- **Mastra 範例：** 新增 Mastra 範例。
+- **整合：** 新增 Flowise 整合文件。
+
+**改進：**
+- **示範：** 更新 mem0AI 示範。
+- **客戶端：** 增強 mem0 客戶端中的 Ping 方法。
+- **AI SDK：** 更新 AI SDK 實作。
+</Update>
+
+<Update label="2025-03-29" description="v2.1.13">
+**改進：**
+- **引入 `ping` 方法以檢查 API 金鑰是否有效並填入組織/專案 ID。**
+</Update>
+
+<Update label="2025-03-29" description="AI SDK v1.0.0">
+**新功能：**
+- **Vercel AI SDK 更新：** 支援閾值與重新排序 (Rerank)。
+
+**改進：**
+- **將 add 呼叫改為非同步以避免阻塞。**
+- **將 `mem0ai` 版本提升至 `2.1.12`。**
+
+</Update>
+
+<Update label="2025-03-26" description="v2.1.12">
+**新功能：**
+- **mem0 開源版：** 支援推理 (infer) 參數。
+
+**改進：**
+- **更新 Supabase TS 文件。**
+- **縮減套件體積。**
+
+</Update>
+
+<Update label="2025-03-19" description="v2.1.11">
+**新功能：**
+- **Supabase 向量儲存整合。**
+- **回饋方法。**
+</Update>
+
+</Tab>
+
+<Tab title="Platform">
+
+<Update label="2025-07-23" description="">
+
+**錯誤修正：**
+- **記憶：** 修正新增 (ADD) 功能。
+
+</Update>
+
+<Update label="2025-07-19" description="">
+
+**新功能：**
+- **UI：** 新增設定 UI 與延遲顯示。
+- **效能：** Neo4j 查詢優化。
+
+**錯誤修正：**
+- **OpenMemory：** 修正 OMM 拋出不必要異常的問題。
+
+</Update>
+
+<Update label="2025-07-18" description="">
+
+**改進：**
+- **UI：** 更新事件 UI。
+- **效能：** 透過優化 MemorySerializer 欄位選取，修正 semantic_search_v2 中的 N+1 查詢問題。
+
+**錯誤修正：**
+- **記憶：** 修正重複記憶索引的 Sentry 錯誤。
+
+</Update>
+
+<Update label="2025-07-17" description="">
+
+**新功能：**
+- **UI：** 新的設定頁面。
+- **記憶：** 重複記憶實體支援。
+
+**改進：**
+- **效能：** 透過消除 N+1 查詢，優化語義搜尋與 get_all API。
+
+</Update>
+
+<Update label="2025-07-16" description="">
+
+**新功能：**
+- **資料庫：** 實作具備增強日誌紀錄與應用程式特定 DB 路由的讀取副本路由。
+
+**改進：**
+- **效能：** 提升 search v2 與 get all v2 端點的查詢效能。
+
+**錯誤修正：**
+- **API：** 修正 get all API 的分頁問題。
+
+</Update>
+
+<Update label="2025-07-12" description="">
+
+**錯誤修正：**
+- **圖形：** 修正社交圖形錯誤與連線問題。
+
+</Update>
+
+<Update label="2025-07-11" description="">
+
+**改進：**
+- **速率限制：** 為 V2 搜尋新增速率限制。
+
+**錯誤修正：**
+- **Slack：** 透過後端改進修正 Slack 速率限制錯誤。
+
+</Update>
+
+<Update label="2025-07-10" description="">
+
+**改進：**
+- **效能：** 
+  - 將連線池時間更改為 5 分鐘。
+  - 分離圖形 Lambda 以獲得更好效能。
+
+</Update>
+
+<Update label="2025-07-09" description="">
+
+**改進：**
+- **圖形：** 圖形優化 V2 與記憶改進。
+
+</Update>
+
+<Update label="2025-07-08" description="">
+
+**新功能：**
+- **資料庫：** 新增讀取副本支援以提升資料庫效能。
+- **UI：** 實作使用者頁面的 UI 變更。
+- **回饋：** 啟用回饋功能。
+
+**錯誤修正：**
+- **序列化器：** 修正 GET ALL 序列化器。
+
+</Update>
+
+<Update label="2025-07-05" description="">
+
+**新功能：**
+- **UI：** 使用者頁面翻新與新版使用者頁面。
+
+</Update>
+
+<Update label="2025-07-04" description="">
+
+**新功能：**
+- **使用者：** 實作新版使用者頁面。
+- **工具：** 新增腳本以回填記憶類別。
+
+**錯誤修正：**
+- **過濾器：** 修正過濾器 Get All 功能。
+
+</Update>
+
+<Update label="2025-07-03" description="">
+
+**改進：**
+- **圖形：** 圖形記憶優化。
+- **記憶：** 修正精確記憶與語義相似記憶的檢索。
+
+</Update>
+
+<Update label="2025-07-02" description="">
+
+**改進：**
+- **分類：** 重構分類邏輯以利用 Gemini 2.5 Flash 並改進訊息處理。
+
+</Update>
+
+<Update label="2025-07-01" description="">
+
+**錯誤修正：**
+- **記憶：** 修正非同步記憶新增 Lambda 中的 old_memory 問題。
+- **事件：** 修正遺失的事件。
+
+</Update>
+
+<Update label="2025-06-30" description="">
+
+**改進：**
+- **圖形：** 改進圖形記憶並將使用者新增至 LTM-STM。
+
+</Update>
+
+<Update label="2025-06-28" description="">
+
+**新功能：**
+- **圖形：** 在圖形記憶新增中支援 SQS。
+- **測試：** 新增 Locust 負載測試腳本與 Grafana 儀表板。
+
+</Update>
+
+<Update label="2025-06-27" description="">
+
+**改進：**
+- **速率限制：** 將新增 (ADD) API 的速率限制更新為 1000/分。
+- **效能：** 提升 Neo4j 效能。
+
+</Update>
+
+<Update label="2025-06-26" description="">
+
+**新功能：**
+- **記憶：** 從抽屜介面編輯記憶功能。
+- **API：** 新增主題建議 API 端點。
+
+</Update>
+
+<Update label="2025-06-25" description="">
+
+**新功能：**
+- **群組聊天：** 具備參與者感知記憶的群組聊天 V2。
+- **記憶：** 記憶中可編輯的元數據。
+- **UI：** 記憶操作徽章。
+
+</Update>
+
+<Update label="2025-06-19" description="">
+
+**新功能：**
+- **速率限制：** 實作全面的速率限制系統。
+
+**改進：**
+- **效能：** 為記憶統計查詢新增效能索引。
+
+**錯誤修正：**
+- **搜尋：** 修正搜尋事件未遵循 top-k 參數的問題。
+
+</Update>
+
+<Update label="2025-06-18" description="">
+
+**新功能：**
+- **記憶管理：** 實作用於記憶清理的 OpenAI 批次 API 並具備回退機制。
+- **Playground：** 在 Playground 上新增 Claude 4 支援。
+
+**改進：**
+- **記憶：** 新增更新記憶元數據的能力。
+
+</Update>
+
+<Update label="2025-06-17" description="">
+
+**新功能：**
+- **UI：** 新版記憶頁面 UI 設計。
+
+</Update>
+
+<Update label="2025-06-16" description="">
+
+**改進：**
+- **基礎設施：** 遷移至應用程式負載平衡器 (ALB)。
+
+</Update>
+
+<Update label="2025-06-13" description="">
+
+**改進：**
+- **記憶管理：** 具備餘弦相似度回退機制的增強型記憶管理。
+
+</Update>
+
+<Update label="2025-06-11" description="">
+
+**新功能：**
+- **OMM：** 新增 OMM 腳本與 UI 功能。
+
+**改進：**
+- **API：** 為 semantic_search_v2 端點新增過濾器驗證。
+
+</Update>
+
+<Update label="2025-06-09" description="">
+
+**新功能：**
+- **Intercom：** 為新增 (ADD) 與搜尋 (SEARCH) 操作設定 Intercom 事件。
+- **OpenMemory：** 新增 Posthog 整合與回饋功能。
+- **MCP：** 具備回饋支援的新版 JavaScript MCP 伺服器。
+
+**改進：**
+- **結構化數據：** 增強記憶管理中的結構化數據處理。
+
+</Update>
+
+<Update label="2025-06-06" description="">
+
+**新功能：**
+- **OAuth：** 新增 mem0 OAuth 整合。
+- **OMM：** 針對已刪除的記憶新增 OMM-mem0 同步。
+
+</Update>
+
+<Update label="2025-06-05" description="">
+
+**新功能：**
+- **過濾器：** 實作通配符過濾器並重構 V2 視圖中的過濾邏輯。
+
+</Update>
+
+<Update label="2025-06-02" description="">
+
+**新功能：**
+- **OpenMemory Cloud：** 新增 OpenMemory 雲端支援。
+- **結構化數據：** 在 Memory 模型中新增 'structured_attributes' 欄位。
+
+</Update>
+
+<Update label="2025-05-30" description="">
+
+**新功能：**
+- **專案：** 在專案視圖中新增 version 與 enable_graph。
+- **OpenMemory：** 為 OpenMemory 新增 Postgres 支援。
+
+</Update>
+
+<Update label="2025-05-19" description="">
+
+**錯誤修正：**
+- **核心：** 修正 user_id、agent_id、run_id 與 app_id 中的 Unicode 錯誤。
+
+</Update>
+
+</Tab>
+
+<Tab title="Vercel AI SDK">
+
+<Update label="2025-12-26" description="v2.0.5">
+**錯誤修正：**
+- **Vercel AI SDK：** 移除不必要的依賴以減輕套件重量。
+</Update>
+
+<Update label="2025-09-25" description="v2.0.4">
+**錯誤修正：**
+- **Vercel AI SDK：** 修正 AI SDK 中的版本參數，為新增操作使用 V2。
+</Update>
+
+<Update label="2025-09-25" description="v2.0.3">
+**新功能：**
+- **Vercel AI SDK：** 新增檔案支援，以實現具備記憶上下文的多模態能力。
+</Update>
+
+<Update label="2025-09-03" description="v2.0.2">
+**錯誤修正：**
+- **Vercel AI SDK：** 修正 AI SDK 中的串流回應。
+</Update>
+
+<Update label="2025-08-05" description="v2.0.1">
+**新功能：**
+- **Vercel AI SDK：** 在配置中新增 `host` 參數。
+</Update>
+
+<Update label="2025-08-05" description="v2.0.0">
+**新功能：**
+- **Vercel AI SDK：** 遷移至 AI SDK V5。
+</Update>
+
+<Update label="2025-06-15" description="v1.0.6">
+**新功能：**
+- **Vercel AI SDK：** 新增 `filter_memories` 參數。
+</Update>
+
+<Update label="2025-05-23" description="v1.0.5">
+**新功能：**
+- **Vercel AI SDK：** 新增對 Google 提供商的支援。
+</Update>
+
+<Update label="2025-05-10" description="v1.0.4">
+**新功能：**
+- **Vercel AI SDK：** 新增對新參數 `output_format` 的支援。
+</Update>
+
+<Update label="2025-05-08" description="v1.0.3">
+**改進：**
+- **Vercel AI SDK：** 新增在服務降級時優雅失敗的支援。
+</Update>
+
+<Update label="2025-05-01" description="v1.0.1">
+**新功能：**
+- **Vercel AI SDK：** 新增圖形記憶支援。
+</Update>
+
+</Tab>
+
+</Tabs>

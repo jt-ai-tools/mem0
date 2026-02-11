@@ -1,0 +1,108 @@
+---
+title: "總覽"
+description: "自行託管 mem0，完整控制您的基礎設施與數據"
+icon: "house"
+---
+
+# mem0 開源版總覽
+
+mem0 開源版提供與平台相同的自適應記憶引擎，但專為需要在自有基礎設施上執行一切的團隊所打造。您將擁有技術棧、數據以及自定義功能的完整控制權。
+
+<Tip>
+  mem0 v1.0.0 推出了重新排序器 (Rerankers)、預設非同步用戶端以及 Azure OpenAI 支援。升級前請參閱 <Link href="/changelog_zh_TW">發佈說明</Link> 以獲取完整的變動概覽。
+</Tip>
+
+## mem0 開源版提供什麼
+
+- **完整控制**：在您的環境中調優每個組件，從 LLM 到向量儲存。
+- **離線就緒**：當合規性或隱私需求要求時，可將記憶保留在自有網路中。
+- **可擴展的程式碼庫**：Fork 儲存庫、新增提供商並發佈自定義自動化功能。
+
+<Info>
+  請從 <Link href="/open-source/python-quickstart_zh_TW">Python 快速上手</Link>（或 Node.js 版本）開始，複製儲存庫、配置依賴項目，並在本地驗證記憶的讀取/寫入。
+</Info>
+
+## 選擇您的路徑
+
+<CardGroup cols={2}>
+  <Card title="Python 快速上手" icon="python" href="/open-source/python-quickstart_zh_TW">
+    啟動 CLI 並驗證新增/搜尋循環。
+  </Card>
+  <Card title="Node.js 快速上手" icon="node" href="/open-source/node-quickstart_zh_TW">
+    安裝 TypeScript SDK 並執行入門腳本。
+  </Card>
+</CardGroup>
+
+<CardGroup cols={3}>
+  <Card title="配置組件" icon="sliders" href="/open-source/configuration_zh_TW">
+    設定 LLM、嵌入向量、向量儲存與重新排序器。
+  </Card>
+  <Card title="圖形記憶能力" icon="network-wired" href="/open-source/features/graph-memory_zh_TW">
+    使用 Neo4j、Memgraph 實現具備關係感知的檢索。
+  </Card>
+  <Card title="調優檢索與重新排序器" icon="sparkles" href="/open-source/features/reranker-search_zh_TW">
+    混合檢索與重新排序器控制。
+  </Card>
+</CardGroup>
+
+<CardGroup cols={2}>
+  <Card title="使用 Docker Compose 部署" icon="server" href="/cookbooks/companions/local-companion-ollama_zh_TW">
+    具備 REST 端點的參考部署方案。
+  </Card>
+  <Card title="使用 REST API" icon="code" href="/open-source/features/rest-api_zh_TW">
+    非同步新增/搜尋流程與自動化。
+  </Card>
+</CardGroup>
+
+<Tip>
+  需要託管替代方案嗎？請在 <Link href="/platform/platform-vs-oss_zh_TW">平台 vs 開源版指南</Link> 中比較託管模式，或切換標籤頁至平台文件。
+</Tip>
+
+<AccordionGroup>
+  <Accordion title="mem0 開源版能帶給您什麼" icon="code-branch">
+
+    | 優勢 | 您將獲得 |
+    | --- | --- |
+    | 完整的基礎設施控制 | 在您自己的伺服器上託管，擁有對配置與部署的完整存取權。 |
+    | 完整的自定義能力 | 修改實作細節、擴展功能，並根據您的技術棧量身打造。 |
+    | 本地開發環境 | 非常適合開發、測試及離線環境。 |
+    | 無廠商鎖定 | 保持對數據、提供商和流水線的所有權。 |
+    | 社群驅動 | 貢獻改進並利用不斷成長的生態系統。 |
+  </Accordion>
+</AccordionGroup>
+
+## 預設組件
+
+<Note>
+  mem0 開源版開箱即用，具備合理的預設設定：
+  - LLM: OpenAI `gpt-4.1-nano-2025-04-14` (透過 `OPENAI_API_KEY`)
+  - 嵌入向量 (Embeddings): OpenAI `text-embedding-3-small`
+  - 向量儲存: 本地 Qdrant 實例，數據儲存在 `/tmp/qdrant`
+  - 歷史儲存: SQLite 資料庫，位於 `~/.mem0/history.db`
+  - 重新排序器 (Reranker): 停用，直到您配置提供商。
+
+  可透過 <Link href="/open-source/configuration_zh_TW">`Memory.from_config`</Link> 覆寫任何組件。
+</Note>
+
+## 繼續探索
+
+{/* DEBUG: verify CTA targets */}
+
+<CardGroup cols={2}>
+  <Card
+    title="回顧平台 vs 開源版"
+    description="確認託管基礎設施或自行託管何者更適合您的工作負載。"
+    icon="arrows-left-right"
+    href="/platform/platform-vs-oss_zh_TW"
+  />
+  <Card
+    title="執行 Python 快速上手"
+    description="複製儲存庫、安裝依賴項目，並持久化您的第一條本地記憶。"
+    icon="terminal"
+    href="/open-source/python-quickstart_zh_TW"
+  />
+</CardGroup>
+
+<Tip>
+  需要託管替代方案嗎？請在 <Link href="/platform/platform-vs-oss_zh_TW">平台 vs 開源版指南</Link> 中比較託管模式，或切換標籤頁至平台文件。
+</Tip>

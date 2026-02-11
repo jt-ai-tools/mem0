@@ -1,0 +1,173 @@
+---
+title: "配置開源版技術棧"
+description: "為 mem0 開源版設定您偏好的 LLM、向量儲存、嵌入器與重新排序器。"
+icon: "sliders"
+---
+
+# 配置 mem0 開源版組件
+
+<Info>
+  **前置需求**
+  - Python 3.10+ 並安裝 `pip`。
+  - 執行中的向量資料庫（例如：Qdrant、Postgres + pgvector）或託管儲存空間的存取憑證。
+  - 您所選擇的 LLM、嵌入器與重新排序器提供商的 API 金鑰。
+</Info>
+
+<Tip>
+  如果您仍需要基礎 CLI 和儲存庫，請從 <Link href="/open-source/python-quickstart_zh_TW">Python 快速上手</Link> 開始。
+</Tip>
+
+## 安裝依賴項目
+
+<Tabs>
+  <Tab title="Python">
+<Steps>
+<Step title="安裝 mem0 開源版">
+```bash
+pip install mem0ai
+```
+</Step>
+<Step title="新增提供商 SDK（範例：Qdrant + OpenAI）">
+```bash
+pip install qdrant-client openai
+```
+</Step>
+</Steps>
+  </Tab>
+  <Tab title="Docker Compose">
+<Steps>
+<Step title="複製儲存庫並複製 Compose 檔案">
+```bash
+git clone https://github.com/mem0ai/mem0.git
+cd mem0/examples/docker-compose
+```
+</Step>
+<Step title="安裝用於本地覆寫的依賴項目">
+```bash
+pip install -r requirements.txt
+```
+</Step>
+</Steps>
+  </Tab>
+</Tabs>
+
+## 定義您的配置
+
+<Tabs>
+  <Tab title="Python">
+<Steps>
+<Step title="建立配置字典">
+```python
+from mem0 import Memory
+
+config = {
+    "vector_store": {
+        "provider": "qdrant",
+        "config": {"host": "localhost", "port": 6333},
+    },
+    "llm": {
+        "provider": "openai",
+        "config": {"model": "gpt-4.1-mini", "temperature": 0.1},
+    },
+    "embedder": {
+        "provider": "vertexai",
+        "config": {"model": "textembedding-gecko@003"},
+    },
+    "reranker": {
+        "provider": "cohere",
+        "config": {"model": "rerank-english-v3.0"},
+    },
+}
+
+memory = Memory.from_config(config)
+```
+</Step>
+<Step title="將機密資訊儲存為環境變數">
+```bash
+export QDRANT_API_KEY="..."
+export OPENAI_API_KEY="..."
+export COHERE_API_KEY="..."
+```
+</Step>
+</Steps>
+  </Tab>
+  <Tab title="config.yaml">
+<Steps>
+<Step title="建立 `config.yaml` 檔案">
+```yaml
+vector_store:
+  provider: qdrant
+  config:
+    host: localhost
+    port: 6333
+
+llm:
+  provider: azure_openai
+  config:
+    api_key: ${AZURE_OPENAI_KEY}
+    deployment_name: gpt-4.1-mini
+
+embedder:
+  provider: ollama
+  config:
+    model: nomic-embed-text
+
+reranker:
+  provider: zero_entropy
+  config:
+    api_key: ${ZERO_ENTROPY_KEY}
+```
+</Step>
+<Step title="在執行階段載入配置檔案">
+```python
+from mem0 import Memory
+
+memory = Memory.from_config_file("config.yaml")
+```
+</Step>
+</Steps>
+  </Tab>
+</Tabs>
+
+<Info icon="check">
+  執行 `memory.add(["記住我在東京最喜歡的咖啡店。"], user_id="alex")` 然後執行 `memory.search("最喜歡的咖啡店", user_id="alex")`。您應該會看到 Qdrant 集合被填入數據，且重新排序器將該記憶標記為首選結果。
+</Info>
+
+## 調優組件設定
+
+<AccordionGroup>
+  <Accordion title="向量儲存集合 (Collections)">
+    在生產環境中明確命名集合 (`collection_name`) 以隔離不同租戶，並啟用個別租戶的保留策略。
+  </Accordion>
+  <Accordion title="LLM 提取溫度 (Temperature)">
+    將提取溫度保持在 ≤0.2，使進階記憶保持確定性。僅在發現遺漏事實時才調高溫度。
+  </Accordion>
+  <Accordion title="重新排序器深度 (Reranker depth)">
+    將 `top_k` 限制在 10–20 個結果；發送過多結果會增加延遲，卻無法帶來顯著收益。
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  混合使用託管與自行託管組件？請確保每個外部提供商的呼叫都經由安全的網路路徑進行。即使您的向量儲存是本地部署 (On-prem)，託管的重新排序器通常也需要對外聯網。
+</Warning>
+
+## 快速恢復
+
+- Qdrant 連線錯誤 → 確認埠號 `6333` 已開放且 API 金鑰（如有設定）正確。
+- 搜尋結果為空 → 驗證嵌入器模型名稱；不匹配會導致維度錯誤。
+- `Unknown reranker` → 更新 SDK (`pip install --upgrade mem0ai`) 以載入最新的提供商註冊表。
+
+<CardGroup cols={2}>
+  <Card
+    title="挑選提供商"
+    description="檢閱 LLM、向量儲存、嵌入器與重新排序器的目錄。"
+    icon="sitemap"
+    href="/components/llms/overview_zh_TW"
+  />
+  <Card
+    title="使用 Docker Compose 部署"
+    description="遵循端對端 (End-to-end) 的開源版部署逐步教學。"
+    icon="server"
+    href="/cookbooks/companions/local-companion-ollama_zh_TW"
+  />
+</CardGroup>

@@ -1,0 +1,61 @@
+---
+title: 總覽
+---
+
+mem0 內建支援多種熱門的大型語言模型 (LLM)。記憶層可以使用使用者提供的 LLM，確保能針對特定需求進行高效利用。
+
+## 用法
+
+若要使用 LLM，您必須提供配置來自定義其用法。如果未提供配置，將套用預設配置，並使用 `OpenAI` 作為 LLM。
+
+有關 LLM 配置的可用參數完整清單，請參閱 [配置 (Config)](./config_zh_TW)。
+
+## 支援的 LLM
+
+請參閱下方支援的 LLM 清單。
+
+<Note>
+  所有 LLM 在 Python 中皆受支援。以下 LLM 在 TypeScript 中亦受支援：**OpenAI**、**Anthropic** 以及 **Groq**。
+</Note>
+
+<CardGroup cols={4}>
+  <Card title="OpenAI" href="/components/llms/models/openai_zh_TW" />
+  <Card title="Ollama" href="/components/llms/models/ollama_zh_TW" />
+  <Card title="Azure OpenAI" href="/components/llms/models/azure_openai_zh_TW" />
+  <Card title="Anthropic" href="/components/llms/models/anthropic_zh_TW" />
+  <Card title="Together" href="/components/llms/models/together_zh_TW" />
+  <Card title="Groq" href="/components/llms/models/groq_zh_TW" />
+  <Card title="Litellm" href="/components/llms/models/litellm_zh_TW" />
+  <Card title="Mistral AI" href="/components/llms/models/mistral_AI_zh_TW" />
+  <Card title="Google AI" href="/components/llms/models/google_AI_zh_TW" />
+  <Card title="AWS Bedrock" href="/components/llms/models/aws_bedrock_zh_TW" />
+  <Card title="DeepSeek" href="/components/llms/models/deepseek_zh_TW" />
+  <Card title="xAI" href="/components/llms/models/xAI_zh_TW" />
+  <Card title="Sarvam AI" href="/components/llms/models/sarvam_zh_TW" />
+  <Card title="LM Studio" href="/components/llms/models/lmstudio_zh_TW" />
+  <Card title="Langchain" href="/components/llms/models/langchain_zh_TW" />
+</CardGroup>
+
+## 結構化 vs 非結構化輸出
+
+mem0 支援兩類 OpenAI LLM 格式，各具優勢與適用場景：
+
+### 結構化輸出 (Structured Outputs)
+
+結構化輸出是指與 OpenAI 結構化輸出模型一致的 LLM：
+
+- **優化目標**：回傳結構化回應（例如：JSON 物件）。
+- **優點**：數據精確且易於解析。
+- **理想場景**：數據提取、表單填寫、API 回應。
+- **了解更多**：[OpenAI 結構化輸出指南](https://platform.openai.com/docs/guides/structured-outputs/introduction)
+
+### 非結構化輸出 (Unstructured Outputs)
+
+非結構化輸出對應於 OpenAI 的標準自由格式文字模型：
+
+- **靈活性**：回傳開放式的自然語言回應。
+- **自定義**：使用 `response_format` 參數來引導輸出。
+- **權衡**：針對特定數據需求時，效率低於結構化輸出。
+- **理想場景**：創意寫作、解釋說明、一般對話。
+
+請根據您的應用程式需求選擇最合適的格式，以獲得最佳的效能與易用性。

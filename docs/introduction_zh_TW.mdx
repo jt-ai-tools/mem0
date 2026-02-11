@@ -1,0 +1,201 @@
+---
+title: "歡迎使用 mem0"
+description: "為 AI 代理打造的記憶層"
+mode: "custom"
+---
+
+{/* debug: welcome-layout-v2 */}
+
+<div className="px-4 pt-16 pb-12 lg:pt-20 max-w-4xl mx-auto text-center space-y-6">
+  <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-zinc-50 tracking-tight mb-3">
+    使用 <span className="text-primary">mem0</span> 進行構建
+  </h1>
+
+<p className="max-w-2xl mx-auto text-base text-gray-600 dark:text-zinc-400 leading-relaxed">
+  為 LLM 應用程式打造的通用、自適應記憶層。
+</p>
+
+  <a
+    href="/platform/quickstart_zh_TW"
+    className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-zinc-500 hover:text-primary dark:hover:text-primary transition-colors"
+  >
+    編寫您的第一條記憶
+    <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+  </a>
+</div>
+
+<section className="px-4 max-w-6xl mx-auto space-y-4">
+  <div className="text-center">
+    <h2 className="text-xl font-semibold text-gray-900 dark:text-zinc-100">
+      mem0 產品
+    </h2>
+  </div>
+
+  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <a
+      href="/platform/overview_zh_TW"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 dark:border-zinc-800/40 bg-white dark:bg-zinc-900/40 transition hover:border-primary/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
+    >
+      <img
+        className="block dark:hidden aspect-[4/3] w-full object-cover"
+        src="/images/docs thumbnails/light/mem0_platform.png"
+        alt="mem0 平台縮圖"
+        style={{pointerEvents: "none"}}
+      />
+      <img
+        className="hidden dark:block aspect-[4/3] w-full object-cover"
+        src="/images/docs thumbnails/dark/mem0_platform.png"
+        alt="mem0 平台縮圖"
+        style={{pointerEvents: "none"}}
+      />
+      <div className="flex flex-1 flex-col gap-3 px-5 pb-6 pt-5 text-left">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-zinc-100 group-hover:text-primary">
+          mem0 平台
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-zinc-400">
+          具備生產級基礎設施的託管記憶服務，幾分鐘內即可就緒。
+        </p>
+      </div>
+    </a>
+
+    <a
+      href="/open-source/overview_zh_TW"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 dark:border-zinc-800/40 bg-white dark:bg-zinc-900/40 transition hover:border-primary/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
+    >
+      <img
+        className="block dark:hidden aspect-[4/3] w-full object-cover"
+        src="/images/docs thumbnails/light/mem0_open_source.png"
+        alt="mem0 開源版縮圖"
+        style={{pointerEvents: "none"}}
+      />
+      <img
+        className="hidden dark:block aspect-[4/3] w-full object-cover"
+        src="/images/docs thumbnails/dark/mem0_open_source.png"
+        alt="mem0 開源版縮圖"
+        style={{pointerEvents: "none"}}
+      />
+      <div className="flex flex-1 flex-col gap-3 px-5 pb-6 pt-5 text-left">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-zinc-100 group-hover:text-primary">
+          mem0 開源版
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-zinc-400">
+          自行託管 mem0 技術棧，完整控制數據、部署與自定義功能。
+        </p>
+      </div>
+    </a>
+
+    <a
+      href="/openmemory/overview_zh_TW"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 dark:border-zinc-800/40 bg-white dark:bg-zinc-900/40 transition hover:border-primary/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
+    >
+      <img
+        className="block dark:hidden aspect-[4/3] w-full object-cover"
+        src="/images/docs thumbnails/light/mem0_openmemory.png"
+        alt="OpenMemory 縮圖"
+        style={{pointerEvents: "none"}}
+      />
+      <img
+        className="hidden dark:block aspect-[4/3] w-full object-cover"
+        src="/images/docs thumbnails/dark/mem0_openmemory.png"
+        alt="OpenMemory 縮圖"
+        style={{pointerEvents: "none"}}
+      />
+      <div className="flex flex-1 flex-col gap-3 px-5 pb-6 pt-5 text-left">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-zinc-100 group-hover:text-primary">
+          OpenMemory
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-zinc-400">
+          為跨代理與專案協作的團隊打造的工作區記憶。
+        </p>
+      </div>
+    </a>
+  </div>
+</section>
+
+<section className="px-4 pt-12 pb-20 max-w-6xl mx-auto space-y-4">
+  <div className="text-center">
+    <h2 className="text-xl font-semibold text-gray-900 dark:text-zinc-100">
+      開發者資源
+    </h2>
+  </div>
+
+  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <a
+      href="/cookbooks/overview_zh_TW"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 dark:border-zinc-800/40 bg-white dark:bg-zinc-900/40 transition hover:border-primary/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
+    >
+      <img
+        className="block dark:hidden aspect-[4/3] w-full object-cover"
+        src="/images/docs thumbnails/light/Cookbooks.png"
+        alt="Cookbooks 縮圖"
+        style={{pointerEvents: "none"}}
+      />
+      <img
+        className="hidden dark:block aspect-[4/3] w-full object-cover"
+        src="/images/docs thumbnails/dark/Cookbooks.png"
+        alt="Cookbooks 縮圖"
+        style={{pointerEvents: "none"}}
+      />
+      <div className="flex flex-1 flex-col gap-3 px-5 pb-6 pt-5 text-left">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-zinc-100 group-hover:text-primary">
+          Cookbooks (範例食譜)
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-zinc-400">
+          生產級教學，展示如何打造令人難忘的 AI 體驗。
+        </p>
+      </div>
+    </a>
+
+    <a
+      href="/integrations_zh_TW"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 dark:border-zinc-800/40 bg-white dark:bg-zinc-900/40 transition hover:border-primary/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
+    >
+      <img
+        className="block dark:hidden aspect-[4/3] w-full object-cover"
+        src="/images/docs thumbnails/light/Integrations.png"
+        alt="整合 縮圖"
+        style={{pointerEvents: "none"}}
+      />
+      <img
+        className="hidden dark:block aspect-[4/3] w-full object-cover"
+        src="/images/docs thumbnails/dark/Integrations.png"
+        alt="整合 縮圖"
+        style={{pointerEvents: "none"}}
+      />
+      <div className="flex flex-1 flex-col gap-3 px-5 pb-6 pt-5 text-left">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-zinc-100 group-hover:text-primary">
+          整合
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-zinc-400">
+          將 mem0 連結至 LangChain、CrewAI、Vercel AI SDK 及 20 多個合作夥伴框架。
+        </p>
+      </div>
+    </a>
+
+    <a
+      href="/api-reference_zh_TW"
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 dark:border-zinc-800/40 bg-white dark:bg-zinc-900/40 transition hover:border-primary/60 hover:bg-gray-50 dark:hover:bg-zinc-900"
+    >
+      <img
+        className="block dark:hidden aspect-[4/3] w-full object-cover"
+        src="/images/docs thumbnails/light/API.png"
+        alt="API 參考縮圖"
+        style={{pointerEvents: "none"}}
+      />
+      <img
+        className="hidden dark:block aspect-[4/3] w-full object-cover"
+        src="/images/docs thumbnails/dark/API.png"
+        alt="API 參考縮圖"
+        style={{pointerEvents: "none"}}
+      />
+      <div className="flex flex-1 flex-col gap-3 px-5 pb-6 pt-5 text-left">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-zinc-100 group-hover:text-primary">
+          API 參考
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-zinc-400">
+          探索每個 REST 端點，包含 Payload 範例與使用指南。
+        </p>
+      </div>
+    </a>
+  </div>
+</section>

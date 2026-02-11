@@ -1,0 +1,349 @@
+---
+title: 圖形記憶
+description: "啟用基於圖形的記憶檢索，以獲得更具上下文相關性的結果"
+---
+
+## 總覽
+
+圖形記憶 (Graph Memory) 透過在數據實體之間建立關係來增強記憶流水線。它構建了一個互連資訊的網路，以實現更具上下文相關性的搜尋結果。
+
+此功能讓您的 AI 應用程式能理解實體之間的聯繫，為回應提供更豐富的上下文。它非常適合需要追蹤關係以及在相關記憶中進行細微資訊檢索的應用程式。
+
+## 圖形記憶如何運作
+
+圖形記憶功能會分析各個實體如何相互連接與關聯。啟用後：
+
+1. mem0 會自動構建實體的圖形表示。
+2. 向量搜尋回傳最頂尖的語義匹配項（包含您配置的任何重新排序器）。
+3. 圖形關係將與這些結果一同回傳，以提供額外的上下文——它們不會對向量匹配項進行重新排序。
+
+## 使用圖形記憶
+
+若要使用圖形記憶，您需要在 API 呼叫中將 `enable_graph=True` 參數設為 True 來啟用它。
+
+### 使用圖形記憶新增記憶
+
+新增記憶時，啟用圖形記憶可自動與現有記憶建立關係：
+
+<CodeGroup>
+
+```python Python
+from mem0 import MemoryClient
+
+client = MemoryClient(
+    api_key="您的-API-金鑰",
+    org_id="您的-組織-ID",
+    project_id="您的-專案-ID"
+)
+
+messages = [
+    {"role": "user", "content": "我的名字是 Joseph"},
+    {"role": "assistant", "content": "你好 Joseph，很高興見到你！"},
+    {"role": "user", "content": "我來自西雅圖，職業是軟體工程師"}
+]
+
+# 新增時啟用圖形記憶
+client.add(
+    messages,
+    user_id="joseph",
+    enable_graph=True
+)
+```
+
+```javascript JavaScript
+import { MemoryClient } from "mem0";
+
+const client = new MemoryClient({
+  apiKey: "您的-API-金鑰",
+  org_id: "您的-組織-ID",
+  project_id: "您的-專案-ID"
+});
+
+const messages = [
+  { role: "user", content: "我的名字是 Joseph" },
+  { role: "assistant", content: "你好 Joseph，很高興見到你！" },
+  { role: "user", content: "我來自西雅圖，職業是軟體工程師" }
+];
+
+// 新增時啟用圖形記憶
+await client.add({
+  messages,
+  user_id: "joseph",
+  enable_graph: true
+});
+```
+
+```json 輸出結果
+{
+  "results": [
+    {
+      "memory": "名字是 Joseph",
+      "event": "ADD",
+      "id": "4a5a417a-fa10-43b5-8c53-a77c45e80438"
+    },
+    {
+      "memory": "來自西雅圖",
+      "event": "ADD",
+      "id": "8d268d0f-5452-4714-b27d-ae46f676a49d"
+    },
+    {
+      "memory": "是一名軟體工程師",
+      "event": "ADD",
+      "id": "5f0a184e-ddea-4fe6-9b92-692d6a901df8"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+圖形記憶看起來會像這樣：
+
+<Frame>
+  <img src="/images/graph-platform.png" alt="圖形記憶可視化，顯示實體之間的關係" />
+</Frame>
+
+<Caption>圖形記憶建立實體之間的關係網路，實現更具上下文的檢索</Caption>
+
+
+<Note>
+圖形記憶的 `add` 操作結果不會直接顯示在回應中。由於新增圖形記憶涉及繁重的處理，這是一個非同步操作，您可以使用 `get_all()` 端點來檢索帶有圖形元數據的記憶。
+</Note>
+
+
+### 使用圖形記憶進行搜尋
+
+搜尋記憶時，圖形記憶有助於檢索那些即使不是直接語義匹配，但在上下文上很重要的實體。
+
+<CodeGroup>
+
+```python Python
+# 啟用圖形記憶進行搜尋
+results = client.search(
+    "我的名字是什麼？",
+    user_id="joseph",
+    enable_graph=True
+)
+
+print(results)
+```
+
+```javascript JavaScript
+// 啟用圖形記憶進行搜尋
+const results = await client.search({
+  query: "我的名字是什麼？",
+  user_id: "joseph",
+  enable_graph: true
+});
+
+console.log(results);
+```
+
+```json 輸出結果
+{
+  "results": [
+    {
+      "id": "4a5a417a-fa10-43b5-8c53-a77c45e80438",
+      "memory": "名字是 Joseph",
+      "user_id": "joseph",
+      "metadata": null,
+      "categories": ["personal_details"],
+      "immutable": false,
+      "created_at": "2025-03-19T09:09:00.146390-07:00",
+      "updated_at": "2025-03-19T09:09:00.146404-07:00",
+      "score": 0.3621795393335552
+    },
+    {
+      "id": "8d268d0f-5452-4714-b27d-ae46f676a49d",
+      "memory": "來自西雅圖",
+      "user_id": "joseph",
+      "metadata": null,
+      "categories": ["personal_details"],
+      "immutable": false,
+      "created_at": "2025-03-19T09:09:00.170680-07:00",
+      "updated_at": "2025-03-19T09:09:00.170692-07:00",
+      "score": 0.31212713194651254
+    }
+  ],
+  "relations": [
+    {
+      "source": "joseph",
+      "source_type": "person",
+      "relationship": "name",
+      "target": "joseph",
+      "target_type": "person",
+      "score": 0.39
+    }
+  ]
+}
+```
+
+</CodeGroup>
+
+<Note>
+`results` 始終反映向量搜尋的順序（可選重新排序）。圖形記憶透過在 `relations` 陣列中增加相關實體來增強回應，它不會自動重新排列向量搜尋結果。
+</Note>
+
+### 使用圖形記憶獲取所有記憶
+
+獲取所有記憶時，圖形記憶提供額外的關係上下文：
+
+<Callout type="warning" title="需要過濾器">
+`get_all()` 現在要求必須指定過濾器 (filters)。
+</Callout>
+
+<CodeGroup>
+
+```python Python
+# 獲取帶有圖形上下文的所有記憶
+memories = client.get_all(
+    filters={"AND": [{"user_id": "joseph"}]},
+    enable_graph=True
+)
+
+print(memories)
+```
+
+```javascript JavaScript
+// 獲取帶有圖形上下文的所有記憶
+const memories = await client.getAll({
+  filters: {"AND": [{"user_id": "joseph"}]},
+  enable_graph: true
+});
+
+console.log(memories);
+```
+
+```json 輸出結果
+{
+  "results": [
+    {
+      "id": "5f0a184e-ddea-4fe6-9b92-692d6a901df8",
+      "memory": "是一名軟體工程師",
+      "user_id": "joseph",
+      "metadata": null,
+      "categories": ["professional_details"],
+      "immutable": false,
+      "created_at": "2025-03-19T09:09:00.194116-07:00",
+      "updated_at": "2025-03-19T09:09:00.194128-07:00",
+    },
+    {
+      "id": "8d268d0f-5452-4714-b27d-ae46f676a49d",
+      "memory": "來自西雅圖",
+      "user_id": "joseph",
+      "metadata": null,
+      "categories": ["personal_details"],
+      "immutable": false,
+      "created_at": "2025-03-19T09:09:00.170680-07:00",
+      "updated_at": "2025-03-19T09:09:00.170692-07:00",
+    },
+    {
+      "id": "4a5a417a-fa10-43b5-8c53-a77c45e80438",
+      "memory": "名字是 Joseph",
+      "user_id": "joseph",
+      "metadata": null,
+      "categories": ["personal_details"],
+      "immutable": false,
+      "created_at": "2025-03-19T09:09:00.146390-07:00",
+      "updated_at": "2025-03-19T09:09:00.146404-07:00",
+    }
+  ],
+  "relations": [
+    {
+      "source": "joseph",
+      "source_type": "person",
+      "relationship": "name",
+      "target": "joseph",
+      "target_type": "person"
+    },
+    {
+      "source": "joseph",
+      "source_type": "person",
+      "relationship": "city",
+      "target": "seattle",
+      "target_type": "city"
+    },
+    {
+      "source": "joseph",
+      "source_type": "person",
+      "relationship": "job",
+      "target": "software engineer",
+      "target_type": "job"
+    }
+  ]
+}
+```
+
+</CodeGroup>
+
+### 在專案層級設定圖形記憶
+
+與其在每次呼叫時傳遞 `enable_graph=True`，您可以在專案層級一次性啟用：
+
+<CodeGroup>
+
+```python Python
+from mem0 import MemoryClient
+
+client = MemoryClient(
+    api_key="您的-API-金鑰",
+    org_id="您的-組織-ID",
+    project_id="您的-專案-ID"
+)
+
+# 為此專案的所有操作啟用圖形記憶
+client.project.update(enable_graph=True)
+
+# 現在所有新增操作將預設使用圖形記憶
+messages = [
+    {"role": "user", "content": "我的名字是 Joseph"},
+    {"role": "assistant", "content": "你好 Joseph，很高興見到你！"},
+    {"role": "user", "content": "我來自西雅圖，職業是軟體工程師"}
+]
+
+client.add(
+    messages,
+    user_id="joseph"
+)
+```
+
+```javascript JavaScript
+import { MemoryClient } from "mem0";
+
+const client = new MemoryClient({
+  apiKey: "您的-API-金鑰",
+  org_id: "您的-組織-ID",
+  project_id: "您的-專案-ID"
+});
+
+// 為此專案的所有操作啟用圖形記憶
+await client.project.update({ enable_graph: true });
+
+// 現在所有新增操作將預設使用圖形記憶
+const messages = [
+  { role: "user", content: "我的名字是 Joseph" },
+  { role: "assistant", content: "你好 Joseph，很高興見到你！" },
+  { role: "user", content: "我來自西雅圖，職業是軟體工程師" }
+];
+
+await client.add({
+  messages,
+  user_id: "joseph"
+});
+```
+
+</CodeGroup>
+
+
+## 最佳實踐
+
+- 針對需要理解記憶之間的上下文與關係的應用程式，啟用圖形記憶。
+- 當擁有豐富的相關對話歷史時，圖形記憶效果最佳。
+- 對於需要追蹤不斷演進資訊的長期運行助手，請考慮使用圖形記憶。
+
+## 效能考量
+
+圖形記憶需要額外的處理，對於非常大型的記憶儲存，可能會略微增加回應時間。然而，對於大多數使用案例，檢索品質的提升遠大於輕微的效能影響。
+
+如果您有任何疑問，請隨時透過以下方式與我們聯繫：
+
+<Snippet file="get-help.mdx" />

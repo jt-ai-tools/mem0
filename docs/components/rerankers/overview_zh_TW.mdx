@@ -1,0 +1,78 @@
+---
+title: 總覽
+description: '選擇合適的重新排序器路徑，提升 mem0 搜尋的相關性。'
+---
+
+mem0 重新排序器 (Rerankers) 會針對向量搜尋結果重新評分，確保您的代理能呈現最相關的記憶。透過此中心，您可以決定重新排序何時能提供幫助、配置提供商，並微調效能。
+
+<Info>
+重新排序是以額外的延遲換取更好的精準度。建議先建立基本的搜尋機制，並在實施前後測量相關性。
+</Info>
+
+<CardGroup cols={3}>
+  <Card
+    title="了解重新排序"
+    description="查看重新排序增強搜尋如何改變您的檢索流程。"
+    icon="search"
+    href="/open-source/features/reranker-search_zh_TW"
+  />
+  <Card
+    title="配置提供商"
+    description="在您的記憶配置中新增重新排序器區塊。"
+    icon="settings"
+    href="/components/rerankers/config_zh_TW"
+  />
+  <Card
+    title="優化效能"
+    description="使用調優策略平衡相關性、延遲與成本。"
+    icon="speedometer"
+    href="/components/rerankers/optimization_zh_TW"
+  />
+  <Card
+    title="自定義提示詞"
+    description="透過量身定制的指令引導基於 LLM 的重新排序。"
+    icon="code"
+    href="/components/rerankers/custom-prompts_zh_TW"
+  />
+  <Card
+    title="Zero Entropy 指南"
+    description="為生產環境工作負載採用託管的神經重新排序器。"
+    icon="sparkles"
+    href="/components/rerankers/models/zero_entropy_zh_TW"
+  />
+  <Card
+    title="Sentence Transformers"
+    description="使用交叉編碼器 (Cross-encoder) 模型在設備本地執行重新排序。"
+    icon="cpu"
+    href="/components/rerankers/models/sentence_transformer_zh_TW"
+  />
+</CardGroup>
+
+## 選擇合適的重新排序器
+
+- **API 優先**：當您需要頂尖品質且能負擔請求成本時（例如：Cohere, Zero Entropy）。
+- **自行託管**：適用於對隱私敏感、必須保留在自有硬體上的部署（例如：Sentence Transformer, Hugging Face）。
+- **LLM 驅動**：當您需要專屬的評分邏輯或複雜提示詞時。
+- **混合模式**：僅在進階服務流程中啟用重新排序，以控制開銷。
+
+## 實作檢查清單
+
+1. 確認基準搜尋的關鍵績效指標 (KPI)，以便衡量提升效果。
+2. 選擇提供商並在配置中新增 `reranker` 區塊。
+3. 使用接近生產環境的查詢批次來測試延遲影響。
+4. 決定要全域啟用重新排序，還是透過 `rerank` 標記針對單次搜尋啟用。
+
+<CardGroup cols={2}>
+  <Card
+    title="設定重新排序"
+    description="逐步了解配置欄位與預設值。"
+    icon="settings"
+    href="/components/rerankers/config_zh_TW"
+  />
+  <Card
+    title="範例：重新排序搜尋"
+    description="遵循功能指南查看重新排序的實際運作。"
+    icon="rocket"
+    href="/open-source/features/reranker-search_zh_TW"
+  />
+</CardGroup>

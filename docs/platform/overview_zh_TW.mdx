@@ -1,0 +1,93 @@
+---
+title: "總覽"
+description: "為 AI 代理打造的託管記憶層 - 幾分鐘內即可完成生產級部署"
+icon: "cloud"
+---
+
+# mem0 平台總覽
+
+mem0 是一個記憶引擎，能保持對話的上下文，讓使用者不必重複說過的話，並讓您的代理具備回應的連貫性。mem0 平台以完全託管服務的形式提供這種體驗——無需您處理任何基礎設施工作，即可擴展、保護並豐富記憶內容。
+
+<Tip>
+  mem0 v1.0.0 推出了重新排序器 (Rerankers)、預設非同步行為以及 Azure OpenAI 支援。請在 <Link href="/changelog_zh_TW">發佈說明</Link> 中查看完整的變動清單。
+</Tip>
+
+## 為什麼這很重要
+
+- **個人化回應**：記憶在使用者與代理之間持久化，減少了提示詞的冗餘並避免重複提問。
+- **託管技術棧**：mem0 負責執行向量儲存、圖形服務和重新排序器——無需手動佈署、調優或維護。
+- **企業級控制**：預設提供 SOC 2、稽核日誌和工作區治理，滿足生產環境的就緒需求。
+
+<AccordionGroup>
+  <Accordion title="mem0 平台提供的功能" icon="sparkles">
+
+    | 功能 | 為什麼有幫助 |
+    | --- | --- |
+    | 快速設定 | 只需增加幾行程式碼即可達到生產級別——無需配置向量資料庫或 LLM。 |
+    | 生產級規模 | 自動擴展、高可用性以及託管基礎設施，讓您專注於產品開發。 |
+    | 進階功能 | 圖形記憶、Webhooks、多模態支援以及自定義類別皆已就緒，隨時可以啟用。 |
+    | 企業級標準 | 具備 SOC 2 Type II、GDPR 合規性以及專屬支援，涵蓋安全與治理需求。 |
+  </Accordion>
+</AccordionGroup>
+
+<Info>
+  請從 <Link href="/platform/quickstart_zh_TW">平台快速上手</Link> 開始配置您的工作區，然後根據您下一個里程碑選擇相應的學習路徑。
+</Info>
+
+## 選擇您的路徑
+
+<CardGroup cols={3}>
+  <Card title="啟動您的工作區" icon="rocket" href="/platform/quickstart_zh_TW">
+    建立專案並發佈第一條記憶。
+  </Card>
+  <Card title="連結任何 AI 用戶端" icon="puzzle-piece" href="/platform/mem0-mcp_zh_TW">
+    使用 MCP 進行通用的 AI 整合。
+  </Card>
+  <Card title="了解記憶類型" icon="brain" href="/core-concepts/memory-types_zh_TW">
+    使用者、代理及對話記憶的行為。
+  </Card>
+</CardGroup>
+
+<CardGroup cols={3}>
+  <Card title="掌握核心操作" icon="circle-check" href="/core-concepts/memory-operations/add_zh_TW">
+    新增、搜尋、更新及刪除工作流程。
+  </Card>
+  <Card title="探索平台功能" icon="sparkles" href="/platform/features/platform-overview_zh_TW">
+    圖形記憶、非同步用戶端及重新排序器。
+  </Card>
+  <Card title="配置進階操作" icon="bolt" href="/platform/advanced-memory-operations_zh_TW">
+    元數據過濾與單次請求開關。
+  </Card>
+</CardGroup>
+
+<CardGroup cols={2}>
+  <Card title="連結整合項目" icon="plug" href="/integrations_zh_TW">
+    LangChain、CrewAI、Vercel AI SDK。
+  </Card>
+  <Card title="在控制面板中監控" icon="presentation" href="https://app.mem0.ai">
+    追蹤活動並管理工作區。
+  </Card>
+</CardGroup>
+
+<Tip>
+  正在評估自行託管？請跳至 <Link href="/platform/platform-vs-oss_zh_TW">平台 vs 開源版對比</Link>，在投入開發前了解兩者的權衡。
+</Tip>
+
+## 繼續探索
+
+{/* DEBUG: verify CTA targets */}
+
+<CardGroup cols={2}>
+  <Card
+    title="與開源版比較"
+    description="檢視功能等價性、遷移路徑，以及何時該選擇託管服務。"
+    icon="arrows-left-right"
+    href="/platform/platform-vs-oss_zh_TW"
+  />
+  <Card
+    title="執行快速上手"
+    description="配置您的工作區、安裝 SDK，並持久化您的第一條記憶。"
+    icon="rocket"
+    href="/platform/quickstart_zh_TW"
+  />
+</CardGroup>

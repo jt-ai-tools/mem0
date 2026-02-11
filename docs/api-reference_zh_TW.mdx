@@ -1,0 +1,108 @@
+---
+title: "總覽"
+icon: "terminal"
+iconType: "solid"
+description: "用於記憶管理、搜尋和實體操作的 REST API"
+---
+
+## mem0 REST API
+
+mem0 提供全面的 REST API，用於將進階記憶能力整合到您的應用程式中。透過簡單的 HTTP 請求，即可跨使用者、代理和自定義實體建立、搜尋、更新和管理記憶。
+
+<Info>
+**快速上手：** 從 [mem0 控制面板](https://app.mem0.ai/dashboard/api-keys) 獲取您的 API 金鑰，幾分鐘內即可完成您的第一次記憶操作。
+</Info>
+
+---
+
+## 快速上手指南
+
+只需三個簡單步驟即可開始使用 mem0 API：
+
+1. **[新增記憶](/api-reference/memory/add-memories_zh_TW)** - 儲存來自使用者對話的資訊與上下文。
+2. **[搜尋記憶](/api-reference/memory/v2-search-memories_zh_TW)** - 使用語義化搜尋檢索相關記憶。
+3. **[獲取記憶](/api-reference/memory/v2-get-memories_zh_TW)** - 獲取特定實體的所有記憶。
+
+---
+
+## 核心操作
+
+<CardGroup cols={2}>
+  <Card title="新增記憶" icon="plus" href="/api-reference/memory/add-memories_zh_TW">
+    儲存來自對話與互動的新記憶。
+  </Card>
+
+  <Card title="搜尋記憶" icon="magnifying-glass" href="/api-reference/memory/v2-search-memories_zh_TW">
+    使用帶有過濾條件的語義化搜尋來尋找相關記憶。
+  </Card>
+
+  <Card title="更新記憶" icon="pen" href="/api-reference/memory/update-memory_zh_TW">
+    修改現有的記憶內容與元數據。
+  </Card>
+
+  <Card title="刪除記憶" icon="trash" href="/api-reference/memory/delete-memory_zh_TW">
+    刪除特定記憶或執行批次刪除操作。
+  </Card>
+</CardGroup>
+
+---
+
+## API 類別
+
+探索按功能分類的完整 API：
+
+<CardGroup cols={2}>
+  <Card title="記憶 API" icon="microchip" href="/api-reference/memory/add-memories_zh_TW">
+    核心與進階操作：CRUD、搜尋、批次更新、歷史記錄與導出。
+  </Card>
+
+  <Card title="事件 API" icon="clock" href="/api-reference/events/get-events_zh_TW">
+    追蹤並監控非同步記憶操作的狀態。
+  </Card>
+
+  <Card title="實體 API" icon="users" href="/api-reference/entities/get-users_zh_TW">
+    管理使用者、代理及其關聯的記憶數據。
+  </Card>
+
+  <Card title="組織與專案" icon="building" href="/api-reference/organizations-projects_zh_TW">
+    多租戶支援、存取控制與團隊協作。
+  </Card>
+
+  <Card title="Webhooks" icon="webhook" href="/api-reference/webhook/create-webhook_zh_TW">
+    記憶事件與更新的即時通知。
+  </Card>
+</CardGroup>
+
+<Note>
+**正在構建多租戶應用程式？** 了解有關 [組織與專案](/api-reference/organizations-projects_zh_TW) 的資訊，以實現團隊隔離與存取控制。
+</Note>
+
+---
+
+## 身份驗證
+
+所有 API 請求都需要使用基於 Token 的身份驗證。請在 Authorization 標頭中包含您的 API 金鑰：
+
+```bash
+Authorization: Token <您的-API-金鑰>
+```
+
+從 [mem0 控制面板](https://app.mem0.ai/dashboard/api-keys) 獲取您的 API 金鑰。
+
+<Warning>
+**請妥善保管您的 API 金鑰。** 切勿在用戶端程式碼或公開儲存庫中洩露金鑰。請僅使用環境變數並從伺服器端發送請求。
+</Warning>
+
+---
+
+## 下一步
+
+<CardGroup cols={2}>
+  <Card title="新增您的第一條記憶" icon="rocket" href="/api-reference/memory/add-memories_zh_TW">
+    開始透過 REST API 儲存記憶。
+  </Card>
+
+  <Card title="使用過濾器進行搜尋" icon="filter" href="/api-reference/memory/v2-search-memories_zh_TW">
+    學習進階搜尋與過濾技術。
+  </Card>
+</CardGroup>

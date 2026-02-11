@@ -1,0 +1,32 @@
+---
+title: 總覽
+---
+
+mem0 支援多種嵌入向量模型 (Embedding models)，允許使用者選擇最適合其需求的模型。
+
+## 支援的嵌入器 (Embedders)
+
+請參閱下方支援的嵌入器清單。
+
+<Note>
+  以下嵌入器在 Python 實作中皆受支援。TypeScript 實作目前僅支援 OpenAI。
+</Note>
+
+<CardGroup cols={4}>
+  <Card title="OpenAI" href="/components/embedders/models/openai_zh_TW"></Card>
+  <Card title="Azure OpenAI" href="/components/embedders/models/azure_openai_zh_TW"></Card>
+  <Card title="Ollama" href="/components/embedders/models/ollama_zh_TW"></Card>
+  <Card title="Hugging Face" href="/components/embedders/models/huggingface_zh_TW"></Card>
+  <Card title="Google AI" href="/components/embedders/models/google_AI_zh_TW"></Card>
+  <Card title="Vertex AI" href="/components/embedders/models/vertexai_zh_TW"></Card>
+  <Card title="Together" href="/components/embedders/models/together_zh_TW"></Card>
+  <Card title="LM Studio" href="/components/embedders/models/lmstudio_zh_TW"></Card>
+  <Card title="Langchain" href="/components/embedders/models/langchain_zh_TW"></Card>
+  <Card title="AWS Bedrock" href="/components/embedders/models/aws_bedrock_zh_TW"></Card>
+</CardGroup>
+
+## 用法
+
+若要使用嵌入向量模型，您必須提供配置來自定義其用法。如果未提供配置，將套用預設配置，並使用 `OpenAI` 作為嵌入向量模型。
+
+有關嵌入向量模型配置的可用參數完整清單，請參閱 [配置 (Config)](./config_zh_TW)。

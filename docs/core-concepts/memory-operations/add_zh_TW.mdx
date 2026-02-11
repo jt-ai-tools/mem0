@@ -1,0 +1,205 @@
+---
+title: 新增記憶
+description: 透過儲存使用者與助手的互動以及事實，將記憶新增至 mem0 平台，以便稍後檢索。
+icon: "plus"
+iconType: "solid"
+---
+
+# mem0 如何新增記憶
+
+新增記憶是 mem0 從對話中捕捉有用細節的方式，讓您的代理稍後能重複使用這些資訊。您可以將其想像成從聊天紀錄中挑選重要的句子，並存入一個結構化的筆記本，供您的代理進行搜尋。
+
+<Info>
+  **為什麼這很重要**
+  - 跨對話保留使用者偏好、目標與回饋。
+  - 為下游對話中的個人化與決策提供動力。
+  - 在託管平台與開源版 (OSS) 部署之間保持上下文一致。
+</Info>
+
+## 關鍵術語
+
+- **訊息 (Messages)** – 您發送至 `add` 方法的使用者/助手對話回合排序清單。
+- **推理 (Infer)** – 控制 mem0 是要提取結構化記憶（`infer=True`，預設值）還是直接儲存原始訊息。
+- **元數據 (Metadata)** – 選填的過濾器（例如：`{"category": "movie_recommendations"}`），有助於稍後的檢索。
+- **使用者 / 對話識別碼** – `user_id`、`session_id` 或 `run_id`，用於定義未來搜尋時的記憶範圍。
+
+## 它是如何運作的？
+
+mem0 提供兩種流程：
+
+- **mem0 平台** – 具備控制面板、擴展能力與圖形功能的完全託管 API。
+- **mem0 開源版** – 在您自有環境中執行的本地 SDK。
+
+這兩種流程皆接收相同的酬載 (Payload) 並通過相同的流水線。
+
+<Frame caption="說明新增記憶過程的架構圖。">
+  <img src="../../images/add_architecture.png" />
+</Frame>
+
+<Steps>
+<Step title="資訊提取">
+mem0 將訊息發送至 LLM，由其提取出需要記住的關鍵事實、決策或偏好。
+</Step>
+<Step title="衝突解決">
+檢查現有記憶是否有重複或矛盾之處，以確保以最新的事實為準。
+</Step>
+<Step title="儲存">
+產生的記憶會進入託管的向量儲存（以及選填的圖形儲存），以便未來能快速搜尋。
+</Step>
+</Steps>
+
+<Warning>
+只有在讓 mem0 推理記憶（`infer=True`，預設值）時，重複項保護才會在衝突解決步驟中執行。如果您切換為 `infer=False`，mem0 會完全依照您提供的內容進行儲存，因此重複內容也會被存入。針對同一個事實混用這兩種模式將導致該事實被儲存兩次。
+</Warning>
+
+您只需呼叫一次 `add` 即可觸發此流水線，無需手動編排。
+
+## 使用 mem0 平台新增
+
+<CodeGroup>
+```python Python
+from mem0 import MemoryClient
+
+client = MemoryClient(api_key="您的-API-金鑰")
+
+messages = [
+    {"role": "user", "content": "我正計劃下個月去東京旅行。"},
+    {"role": "assistant", "content": "太棒了！我會記住這一點，以便未來提供建議。"}
+]
+
+client.add(
+    messages=messages,
+    user_id="alice",
+)
+```
+
+```javascript JavaScript
+import { MemoryClient } from "mem0ai";
+
+const client = new MemoryClient({apiKey: "您的-API-金鑰"});
+
+const messages = [
+  { role: "user", content: "我正計劃下個月去東京旅行。" },
+  { role: "assistant", content: "太棒了！我會記住這一點，以便未來提供建議。" }
+];
+
+await client.add(messages, {
+  user_id: "alice",
+  version: "v2",
+});
+```
+</CodeGroup>
+
+<Info icon="check">
+  預期回應中會包含 `memory_id`（或 ID 清單）。請查看 mem0 控制面板，確認正確的使用者下方已有新的條目。
+</Info>
+
+## 使用 mem0 開源版新增
+
+<CodeGroup>
+```python Python
+import os
+from mem0 import Memory
+
+os.environ["OPENAI_API_KEY"] = "您的-API-金鑰"
+
+m = Memory()
+
+messages = [
+    {"role": "user", "content": "我今晚打算看部電影。有什麼推薦嗎？"},
+    {"role": "assistant", "content": "驚悚片怎麼樣？它們通常很引人入勝。"},
+    {"role": "user", "content": "我不太喜歡驚悚片，但我很喜歡科幻電影。"},
+    {"role": "assistant", "content": "沒問題！我會避開驚悚片的推薦，以後會多建議科幻電影。"}
+]
+
+# 儲存推理出的記憶（預設行為）
+result = m.add(messages, user_id="alice", metadata={"category": "movie_recommendations"})
+
+# （選填）直接儲存原始訊息而不進行推理
+result = m.add(messages, user_id="alice", metadata={"category": "movie_recommendations"}, infer=False)
+```
+
+```javascript JavaScript
+import { Memory } from 'mem0ai/oss';
+
+const memory = new Memory();
+
+const messages = [
+  {
+    role: "user",
+    content: "我喜歡在早上喝咖啡並散散步。"
+  }
+];
+
+const result = memory.add(messages, {
+  userId: "alice",
+  metadata: { category: "preferences" }
+});
+```
+</CodeGroup>
+
+<Tip>
+  僅在您需要儲存原始對話紀錄時才使用 `infer=False`。大多數工作流程都能從 mem0 自動提取結構化記憶的功能中受益。
+</Tip>
+
+<Warning>
+如果您確實選擇了 `infer=False`，請保持一致。原始插入會跳過衝突解決，因此稍後使用相同內容呼叫 `infer=True` 時，會建立第二條記憶而非更新第一條。
+</Warning>
+
+## 您應該在何時新增記憶？
+
+每當代理學到有用的資訊時，就應新增記憶：
+
+- 分享了新的使用者偏好。
+- 做出決策或給出建議。
+- 完成目標或任務。
+- 引入了新的實體。
+- 使用者提供回饋或澄清說明。
+
+<Callout type="tip" icon="plug">
+  **MCP 替代方案**：使用 <Link href="/platform/mem0-mcp_zh_TW">mem0 MCP</Link>，AI 代理可以根據上下文自動新增記憶。
+</Callout>
+
+儲存這些上下文能讓代理在未來的互動中做出更好的推理。
+
+
+### 更多細節
+
+有關支援欄位、要求格式及進階選項的完整清單，請參閱
+[新增記憶 API 參考](/api-reference/memory/add-memories_zh_TW)。
+
+## 託管平台 vs 開源版差異
+
+| 能力 | mem0 平台 | mem0 開源版 |
+| --- | --- | --- |
+| 衝突解決 | 自動處理，可在控制面板查看 | SDK 在本地處理合併；您控制儲存 |
+| 圖形寫入 | 每次請求可選開關 (`enable_graph=True`) | 需要配置圖形提供商 |
+| 速率限制 | 每個工作區有託管配額 | 受限於您的硬體與提供商 API |
+| 控制面板可見性 | 有 — 可視化檢查記憶 | 透過 CLI、日誌或自定義 UI 檢查 |
+
+## 開始實踐
+
+- 檢閱 <Link href="/platform/advanced-memory-operations_zh_TW">進階記憶操作</Link> 指南，學習如何疊加元數據、重新排序器與圖形開關。
+- 探索 <Link href="/api-reference/memory/add-memories_zh_TW">新增記憶 API 參考</Link> 以了解每個請求/回應欄位。
+
+## 查看實際應用
+
+- <Link href="/cookbooks/operations/support-inbox_zh_TW">使用 mem0 的支援收件匣</Link> 展示了 新增 + 搜尋 如何驅動支援流程。
+- <Link href="/cookbooks/companions/ai-tutor_zh_TW">使用 mem0 的 AI 導師</Link> 使用新增功能來個人化教學計劃。
+
+{/* DEBUG: verify CTA targets */}
+
+<CardGroup cols={2}>
+  <Card
+    title="探索搜尋概念"
+    description="在搜尋指南中了解已儲存的記憶如何餵給檢索系統。"
+    icon="search"
+    href="/core-concepts/memory-operations/search_zh_TW"
+  />
+  <Card
+    title="構建支援代理"
+    description="遵循範例食譜在生產環境中應用 新增/搜尋/更新。"
+    icon="rocket"
+    href="/cookbooks/operations/support-inbox_zh_TW"
+  />
+</CardGroup>

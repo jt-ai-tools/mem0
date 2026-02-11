@@ -1,0 +1,298 @@
+---
+title: Node SDK 快速上手
+description: "在幾分鐘內從 TypeScript 或 JavaScript 應用程式中儲存並搜尋 mem0 記憶。"
+icon: "js"
+---
+
+只需幾個步驟，即可使用 Node SDK 啟動 mem0。您將安裝套件、初始化客戶端、新增一條記憶，並透過單次搜尋來確認檢索結果。
+
+## 前置需求
+
+- Node.js 18 或更高版本
+- （選填）當您想自定義提供商時，請在環境變數中儲存 OpenAI API 金鑰。
+
+## 安裝並執行您的第一條記憶
+
+<Steps>
+<Step title="安裝 SDK">
+```bash
+npm install mem0ai
+```
+</Step>
+
+<Step title="初始化客戶端">
+```ts
+import { Memory } from "mem0ai/oss";
+
+const memory = new Memory();
+```
+</Step>
+
+<Step title="新增一條記憶">
+```ts
+const messages = [
+  { role: "user", content: "我今晚打算看部電影。有什麼推薦嗎？" },
+  { role: "assistant", content: "驚悚片怎麼樣？它們通常很引人入勝。" },
+  { role: "user", content: "我不太喜歡驚悚片，但我很喜歡科幻電影。" },
+  { role: "assistant", content: "沒問題！我會避開驚悚片的推薦，以後會多建議科幻電影。" }
+];
+
+await memory.add(messages, { userId: "alice", metadata: { category: "movie_recommendations" } });
+```
+</Step>
+
+<Step title="搜尋記憶">
+```ts
+const results = await memory.search("您對我有什麼了解？", { userId: "alice" });
+console.log(results);
+```
+
+**輸出結果**
+```json
+{
+  "results": [
+    {
+      "id": "892db2ae-06d9-49e5-8b3e-585ef9b85b8e",
+      "memory": "使用者今晚打算看部電影。",
+      "score": 0.38920719231944799,
+      "metadata": {
+        "category": "movie_recommendations"
+      },
+      "userId": "alice"
+    }
+  ]
+}
+```
+</Step>
+</Steps>
+
+<Note>
+預設情況下，Node SDK 使用對本地開發友善的設定（OpenAI `gpt-4.1-nano-2025-04-14`、`text-embedding-3-small`、記憶體內向量儲存以及 SQLite 歷史記錄）。您可以透過傳遞如下所示的配置來更換組件。
+</Note>
+
+## 生產環境配置
+
+```ts
+import { Memory } from "mem0ai/oss";
+
+const memory = new Memory({
+  version: "v1.1",
+  embedder: {
+    provider: "openai",
+    config: {
+      apiKey: process.env.OPENAI_API_KEY || "",
+      model: "text-embedding-3-small"
+    }
+  },
+  vectorStore: {
+    provider: "memory",
+    config: {
+      collectionName: "memories",
+      dimension: 1536
+    }
+  },
+  llm: {
+    provider: "openai",
+    config: {
+      apiKey: process.env.OPENAI_API_KEY || "",
+      model: "gpt-4-turbo-preview"
+    }
+  },
+  historyDbPath: "memory.db"
+});
+```
+
+## 管理記憶（選填）
+
+<CodeGroup>
+```ts 獲取所有記憶
+const allMemories = await memory.getAll({ userId: "alice" });
+console.log(allMemories);
+```
+
+```ts 獲取單一記憶
+const singleMemory = await memory.get("892db2ae-06d9-49e5-8b3e-585ef9b85b8e");
+console.log(singleMemory);
+```
+
+```ts 搜尋記憶
+const result = await memory.search("您對我有什麼了解？", { userId: "alice" });
+console.log(result);
+```
+
+```ts 更新記憶
+const updateResult = await memory.update(
+  "892db2ae-06d9-49e5-8b3e-585ef9b85b8e",
+  "我喜歡印度，它是我最喜歡的國家。"
+);
+console.log(updateResult);
+```
+</CodeGroup>
+
+```ts
+// 稽核歷史記錄
+const history = await memory.history("892db2ae-06d9-49e5-8b3e-585ef9b85b8e");
+console.log(history);
+
+// 刪除特定或指定範圍的記憶
+await memory.delete("892db2ae-06d9-49e5-8b3e-585ef9b85b8e");
+await memory.deleteAll({ userId: "alice" });
+
+// 重置所有內容
+await memory.reset();
+```
+
+## 使用自定義歷史記錄儲存
+
+當您需要對無伺服器 (Serverless) 友好的歷史記錄儲存時，Node SDK 支援 Supabase（或其他提供商）。
+
+<CodeGroup>
+```ts Supabase 提供商
+import { Memory } from "mem0ai/oss";
+
+const memory = new Memory({
+  historyStore: {
+    provider: "supabase",
+    config: {
+      supabaseUrl: process.env.SUPABASE_URL || "",
+      supabaseKey: process.env.SUPABASE_KEY || "",
+      tableName: "memory_history"
+    }
+  }
+});
+```
+
+```ts 停用歷史記錄
+import { Memory } from "mem0ai/oss";
+
+const memory = new Memory({
+  disableHistory: true
+});
+```
+</CodeGroup>
+
+使用以下 SQL 建立 Supabase 資料表：
+
+```sql
+create table memory_history (
+  id text primary key,
+  memory_id text not null,
+  previous_value text,
+  new_value text,
+  action text not null,
+  created_at timestamp with time zone default timezone('utc', now()),
+  updated_at timestamp with time zone,
+  is_deleted integer default 0
+);
+```
+
+## 配置參數
+
+mem0 針對向量儲存、LLM、嵌入器及歷史記錄儲存提供細粒度的配置。
+
+<AccordionGroup>
+  <Accordion title="向量儲存 (Vector store)">
+| 參數 | 描述 | 預設值 |
+| --- | --- | --- |
+| `provider` | 向量儲存提供商（例如：`"memory"`） | `"memory"` |
+| `host` | 主機地址 | `"localhost"` |
+| `port` | 埠號 | `undefined` |
+  </Accordion>
+  <Accordion title="LLM">
+| 參數 | 描述 | 提供商 |
+| --- | --- | --- |
+| `provider` | LLM 提供商（例如：`"openai"`, `"anthropic"`） | 全部 |
+| `model` | 要使用的模型 | 全部 |
+| `temperature` | 溫度值 (Temperature) | 全部 |
+| `apiKey` | API 金鑰 | 全部 |
+| `maxTokens` | 生成的最大提示詞 (Tokens) 數量 | 全部 |
+| `topP` | 機率閾值 | 全部 |
+| `topK` | 保留的提示詞數量 | 全部 |
+| `openaiBaseUrl` | 覆寫基礎 URL | OpenAI |
+  </Accordion>
+  <Accordion title="圖形儲存 (Graph store)">
+| 參數 | 描述 | 預設值 |
+| --- | --- | --- |
+| `provider` | 圖形儲存提供商（例如：`"neo4j"`） | `"neo4j"` |
+| `url` | 連線 URL | `process.env.NEO4J_URL` |
+| `username` | 使用者名稱 | `process.env.NEO4J_USERNAME` |
+| `password` | 密碼 | `process.env.NEO4J_PASSWORD` |
+  </Accordion>
+  <Accordion title="嵌入器 (Embedder)">
+| 參數 | 描述 | 預設值 |
+| --- | --- | --- |
+| `provider` | 嵌入向量提供商 | `"openai"` |
+| `model` | 嵌入向量模型 | `"text-embedding-3-small"` |
+| `apiKey` | API 金鑰 | `undefined` |
+  </Accordion>
+  <Accordion title="一般 (General)">
+| 參數 | 描述 | 預設值 |
+| --- | --- | --- |
+| `historyDbPath` | 歷史記錄資料庫路徑 | `"{mem0_dir}/history.db"` |
+| `version` | API 版本 | `"v1.0"` |
+| `customPrompt` | 自定義處理提示詞 | `undefined` |
+  </Accordion>
+  <Accordion title="歷史記錄儲存 (History store)">
+| 參數 | 描述 | 預設值 |
+| --- | --- | --- |
+| `provider` | 歷史記錄提供商 | `"sqlite"` |
+| `config` | 提供商配置 | `undefined` |
+| `disableHistory` | 停用歷史記錄儲存 | `false` |
+  </Accordion>
+  <Accordion title="完整配置範例">
+```ts
+const config = {
+  version: "v1.1",
+  embedder: {
+    provider: "openai",
+    config: {
+      apiKey: process.env.OPENAI_API_KEY || "",
+      model: "text-embedding-3-small"
+    }
+  },
+  vectorStore: {
+    provider: "memory",
+    config: {
+      collectionName: "memories",
+      dimension: 1536
+    }
+  },
+  llm: {
+    provider: "openai",
+    config: {
+      apiKey: process.env.OPENAI_API_KEY || "",
+      model: "gpt-4-turbo-preview"
+    }
+  },
+  historyStore: {
+    provider: "supabase",
+    config: {
+      supabaseUrl: process.env.SUPABASE_URL || "",
+      supabaseKey: process.env.SUPABASE_KEY || "",
+      tableName: "memories"
+    }
+  },
+  disableHistory: false,
+  customPrompt: "我是一個虛擬助手。我在這裡協助您解決查詢。"
+};
+```
+  </Accordion>
+</AccordionGroup>
+
+## 下一步
+
+<CardGroup cols={3}>
+  <Card title="探索記憶操作" icon="database" href="/core-concepts/memory-operations/add_zh_TW">
+    回顧開源版技術棧中的 CRUD 模式、過濾器及進階檢索。
+  </Card>
+  <Card title="自定義配置" icon="sliders" href="/open-source/configuration_zh_TW">
+    在生產環境中換成您偏好的 LLM、向量儲存及歷史記錄提供商。
+  </Card>
+  <Card title="自動化 Node 工作流程" icon="plug" href="/cookbooks/integrations/openai-tool-calls_zh_TW">
+    查看完整的 Node 工作流程，將 mem0 記憶層疊加至具備工具呼叫能力的代理上。
+  </Card>
+</CardGroup>
+
+如果您有任何疑問，請隨時與我們聯繫：
+
+<Snippet file="get-help.mdx" />

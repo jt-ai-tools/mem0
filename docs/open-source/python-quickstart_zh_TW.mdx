@@ -1,0 +1,109 @@
+---
+title: Python SDK 快速上手
+description: "快速開始使用 mem0！"
+icon: "snake"
+---
+
+在 5 分鐘內開始使用 mem0 的 Python SDK。本指南將向您展示如何安裝 mem0 並儲存您的第一條記憶。
+
+## 前置需求
+
+- Python 3.10 或更高版本
+- OpenAI API 金鑰（[在此獲取](https://platform.openai.com/api-keys)）
+
+設定您的 OpenAI API 金鑰：
+
+```bash
+export OPENAI_API_KEY="您的-openai-api-金鑰"
+```
+
+<Note>
+預設使用 OpenAI。想使用 Ollama、Anthropic 或本地模型？請參閱 [配置](/open-source/configuration_zh_TW)。
+</Note>
+
+## 安裝步驟
+
+<Steps>
+<Step title="透過 pip 安裝">
+```bash
+pip install mem0ai
+```
+</Step>
+
+<Step title="初始化記憶">
+```python
+from mem0 import Memory
+
+m = Memory()
+
+````
+</Step>
+
+<Step title="新增一條記憶">
+```python
+messages = [
+    {"role": "user", "content": "嗨，我是 Alex。我喜歡籃球和電玩。"},
+    {"role": "assistant", "content": "嘿 Alex！我會記住您的興趣。"}
+]
+m.add(messages, user_id="alex")
+````
+
+</Step>
+
+<Step title="搜尋記憶">
+```python
+results = m.search("您對我有什麼了解？", filters={"user_id": "alex"})
+print(results)
+```
+
+**輸出結果：**
+
+```json
+{
+  "results": [
+    {
+      "id": "mem_123abc",
+      "memory": "名字是 Alex。喜歡籃球和電玩。",
+      "user_id": "alex",
+      "categories": ["personal_info"],
+      "created_at": "2025-10-22T04:40:22.864647-07:00",
+      "score": 0.89
+    }
+  ]
+}
+```
+
+</Step>
+</Steps>
+
+
+<Note>
+預設情況下，`Memory()` 會配置：
+- OpenAI `gpt-4.1-nano-2025-04-14` 用於事實提取與更新。
+- OpenAI `text-embedding-3-small` 嵌入向量 (1536 維度)。
+- Qdrant 向量儲存，磁碟數據存儲於 `/tmp/qdrant`。
+- SQLite 歷史記錄存儲於 `~/.mem0/history.db`。
+- 無重新排序器 (Reranker)（如有需要請在配置中新增）。
+</Note>
+
+## 下一步
+
+<CardGroup cols={3}>
+<Card title="記憶操作" icon="database" href="/core-concepts/memory-operations/add_zh_TW">
+學習如何透過完整的 CRUD 操作來搜尋、更新及管理記憶。
+</Card>
+
+<Card title="配置" icon="sliders" href="/open-source/configuration_zh_TW">
+  為生產環境使用不同的 LLM、向量儲存與嵌入器來自定義 mem0。
+</Card>
+
+<Card title="進階功能" icon="sparkles" href="/open-source/features/async-memory_zh_TW">
+探索非同步支援、圖形記憶以及多代理記憶組織。
+</Card>
+</CardGroup>
+
+## 其他資源
+
+- **[OpenAI 相容性](/open-source/features/openai_compatibility_zh_TW)** - 將 mem0 與 OpenAI 相容的對話補全 (Chat Completions) 搭配使用。
+- **[貢獻指南](/contributing/development_zh_TW)** - 了解如何為 mem0 做出貢獻。
+- **[範例](/cookbooks/companions/local-companion-ollama_zh_TW)** - 查看 mem0 與 Ollama 及其他整合項目的實際應用。
