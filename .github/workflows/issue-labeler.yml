@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   label:
+    if: ${{ github.repository == 'mem0ai/mem0' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

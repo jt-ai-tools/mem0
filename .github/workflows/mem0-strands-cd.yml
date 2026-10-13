@@ -21,7 +21,7 @@ on:
 jobs:
   build-n-publish:
     name: Build and publish mem0-strands 📦 to PyPI
-    if: startsWith(inputs.tag, 'mem0-strands-v')
+    if: ${{ github.repository == 'mem0ai/mem0' && (startsWith(inputs.tag, 'mem0-strands-v')) }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write

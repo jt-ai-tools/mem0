@@ -20,7 +20,7 @@ jobs:
     name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
     # Pure SDK version tags only (v1.2.3) — excludes package-prefixed tags
     # like vercel-ai-v* that also start with 'v'
-    if: startsWith(inputs.tag, 'v') && !contains(inputs.tag, '-v')
+    if: ${{ github.repository == 'mem0ai/mem0' && (startsWith(inputs.tag, 'v') && !contains(inputs.tag, '-v')) }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write

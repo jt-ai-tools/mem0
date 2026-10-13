@@ -19,7 +19,7 @@ on:
 jobs:
   build-n-publish:
     name: Build and publish @mem0/vercel-ai-provider 📦 to npm
-    if: startsWith(inputs.tag, 'vercel-ai-v')
+    if: ${{ github.repository == 'mem0ai/mem0' && (startsWith(inputs.tag, 'vercel-ai-v')) }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write

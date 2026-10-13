@@ -63,7 +63,7 @@ jobs:
         run: cd integrations/openclaw && pnpm exec vitest run --coverage
 
       - name: Upload coverage to Codecov
-        if: matrix.node-version == 20
+        if: ${{ github.repository == 'mem0ai/mem0' && (matrix.node-version == 20) }}
         uses: codecov/codecov-action@v4
         with:
           flags: openclaw

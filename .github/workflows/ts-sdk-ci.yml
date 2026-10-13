@@ -111,6 +111,7 @@ jobs:
           path: mem0-ts/coverage/
 
   integration_ts_sdk:
+    if: ${{ github.repository == 'mem0ai/mem0' }}
     needs: build_ts_sdk
     runs-on: ubuntu-latest
     strategy:

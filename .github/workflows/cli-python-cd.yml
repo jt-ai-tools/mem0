@@ -18,7 +18,7 @@ on:
 jobs:
   build-n-publish:
     name: Build and publish mem0-cli 📦 to PyPI
-    if: startsWith(inputs.tag, 'cli-v')
+    if: ${{ github.repository == 'mem0ai/mem0' && (startsWith(inputs.tag, 'cli-v')) }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write

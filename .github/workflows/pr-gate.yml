@@ -20,13 +20,7 @@ permissions:
 
 jobs:
   gate:
-    if: >-
-      github.event_name == 'pull_request_target' &&
-      github.event.action != 'edited' &&
-      github.event.pull_request.draft == false &&
-      github.event.pull_request.user.type != 'Bot' &&
-      github.event.pull_request.head.repo.full_name != github.repository &&
-      !contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+    if: ${{ github.repository == 'mem0ai/mem0' && (github.event_name == 'pull_request_target' && github.event.action != 'edited' && github.event.pull_request.draft == false && github.event.pull_request.user.type != 'Bot' && github.event.pull_request.head.repo.full_name != github.repository && !contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v7
@@ -110,9 +104,7 @@ jobs:
             core.info(`Closed #${pr.number}: no accepted issue linked`);
 
   reopen:
-    if: >-
-      (github.event_name == 'issues' && github.event.label.name == 'accepted') ||
-      (github.event.action == 'edited' && github.event.pull_request.state == 'closed')
+    if: ${{ github.repository == 'mem0ai/mem0' && ((github.event_name == 'issues' && github.event.label.name == 'accepted') || (github.event.action == 'edited' && github.event.pull_request.state == 'closed')) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v7

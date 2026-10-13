@@ -18,7 +18,7 @@ on:
 jobs:
   build-n-publish:
     name: Build and publish mem0ai 📦 to npm
-    if: startsWith(inputs.tag, 'ts-v')
+    if: ${{ github.repository == 'mem0ai/mem0' && (startsWith(inputs.tag, 'ts-v')) }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write
