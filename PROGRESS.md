@@ -38,7 +38,7 @@
 ## 其他子目錄
 - [x] server/README.md -> server/README_zh_TW.md
 - [x] openmemory/README.md -> openmemory/README_zh_TW.md
-- [x] evaluation/README.md -> evaluation/README_zh_TW.md
+- [x] evaluation/README.md -> translations/legacy/evaluation/README_zh_TW.md (歷史翻譯；上游 evaluation 已改為子模組)
 
 ### 其他專案組件
 - [x] openclaw/README.md -> openclaw/README_zh_TW.md

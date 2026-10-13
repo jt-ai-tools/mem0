@@ -1,22 +1,110 @@
 import axios from "axios";
+import { v7 as uuidv7 } from "uuid";
 import {
   AllUsers,
+  PaginatedMemories,
   ProjectOptions,
   Memory,
   MemoryHistory,
-  MemoryOptions,
+  AddMemoryOptions,
+  SearchMemoryOptions,
+  GetAllMemoryOptions,
+  DeleteAllMemoryOptions,
+  DeleteMemoryOptions,
   MemoryUpdateBody,
   ProjectResponse,
   PromptUpdatePayload,
-  SearchOptions,
   Webhook,
-  WebhookPayload,
+  WebhookCreatePayload,
+  WebhookUpdatePayload,
   Message,
   FeedbackPayload,
   CreateMemoryExportPayload,
   GetMemoryExportPayload,
+  ProfileEntityType,
+  ProfileResponse,
+  ProfileJobResponse,
+  ProfileJobStatus,
+  ProfileSettings,
+  ProfileSettingsResponse,
 } from "./mem0.types";
-import { captureClientEvent, generateHash } from "./telemetry";
+import {
+  captureClientEvent,
+  generateHash,
+  isTelemetryEnabled,
+  telemetry,
+} from "./telemetry";
+import {
+  getOrCreateMem0UserId,
+  isMem0Aliased,
+  markMem0Aliased,
+  readMem0AnonIds,
+} from "./config";
+import { camelToSnake, camelToSnakeKeys, snakeToCamelKeys } from "./utils";
+import { createExceptionFromResponse, MemoryError } from "../common/exceptions";
+
+// Entity params that must be passed via filters - check both snake_case and camelCase
+const ENTITY_PARAMS = [
+  "user_id",
+  "agent_id",
+  "app_id",
+  "run_id",
+  "userId",
+  "agentId",
+  "appId",
+  "runId",
+];
+
+/**
+ * Validates that no top-level entity parameters are passed.
+ * @throws Error if entity params are found at top level
+ */
+function rejectTopLevelEntityParams(
+  options: Record<string, any> | undefined,
+  methodName: string,
+): void {
+  const invalidKeys = Object.keys(options ?? {}).filter((k) =>
+    ENTITY_PARAMS.includes(k),
+  );
+  if (invalidKeys.length > 0) {
+    throw new Error(
+      `Top-level entity parameters [${invalidKeys.join(", ")}] are not supported in ${methodName}(). ` +
+        `Use filters: { user_id: "..." } instead.`,
+    );
+  }
+}
+
+function rejectFilters(
+  options: Record<string, any> | undefined,
+  methodName: string,
+): void {
+  if (options?.filters != null) {
+    throw new Error(
+      `filters is not supported in ${methodName}(). ` +
+        `Pass entity IDs at the top level, e.g. userId: "...".`,
+    );
+  }
+}
+
+/** Throws on an empty entity ID, which the API treats as matching every memory. */
+function rejectBlankEntityIds(options: Record<string, any> | undefined): void {
+  for (const [key, value] of Object.entries(options ?? {})) {
+    if (
+      ENTITY_PARAMS.includes(key) &&
+      typeof value === "string" &&
+      value.trim() === ""
+    ) {
+      throw new Error(
+        `${key} cannot be empty or whitespace-only: an empty ID would match every memory in the project. ` +
+          `To delete everything on purpose, call deleteAll() with "*" explicitly.`,
+      );
+    }
+  }
+}
+
+function encodePathSegment(value: unknown): string {
+  return encodeURIComponent(String(value));
+}
 
 class APIError extends Error {
   constructor(message: string) {
@@ -28,22 +116,93 @@ class APIError extends Error {
 interface ClientOptions {
   apiKey: string;
   host?: string;
-  organizationName?: string;
-  projectName?: string;
-  organizationId?: string;
-  projectId?: string;
+  /** Max cached identities per process. Defaults to 50. */
+  identityCacheMax?: number;
+}
+
+interface ClientIdentity {
+  telemetryId: string;
+  organizationId: string | number | null;
+  projectId: string | number | null;
+}
+
+// Shares one ping per (host, api key) across clients; FIFO-capped.
+// One collection for every generation; the operation is a body field.
+const PROFILE_JOBS_PATH = "/v2/profiles/jobs/";
+
+const IDENTITY_CACHE_MAX_DEFAULT = 50;
+const identityByCredentials = new Map<string, Promise<ClientIdentity>>();
+
+declare const __MEM0_SDK_VERSION__: string | undefined;
+
+// Injected by tsup (see mem0-ts/tsup.config.ts `define`), the same mechanism
+// telemetry.ts already uses. A hardcoded literal goes stale at the next release
+// bump and then misreports the client version forever.
+const SDK_VERSION =
+  typeof __MEM0_SDK_VERSION__ !== "undefined" ? __MEM0_SDK_VERSION__ : "dev";
+
+const MAX_STACK_ENTRIES = 4;
+const MAX_STACK_CHARS = 200;
+
+/**
+ * Append our own entry and bound the result, dropping WHOLE entries.
+ *
+ * Neither cap cuts characters: slicing the joined string severs an identifier
+ * and leaves a fragment the platform parses as a real client name. And the
+ * reserved slot is ours. Pushing first and then trimming to four dropped exactly
+ * the entry this exists to add whenever a caller already sent four, so we
+ * vanished from our own stack while every caller claim survived.
+ */
+function boundedStack(callerEntries: string[], own: string): string {
+  const kept: string[] = [];
+  let budget = MAX_STACK_CHARS - own.length;
+  for (const entry of callerEntries.slice(0, MAX_STACK_ENTRIES - 1)) {
+    const cost = entry.length + ", ".length;
+    if (cost > budget) break;
+    budget -= cost;
+    kept.push(entry);
+  }
+  return [...kept, own].join(", ");
+}
+
+/**
+ * Surface-identity headers.
+ *
+ * X-Mem0-Source and X-Application are SET-ONCE by contract: whichever layer is
+ * outermost sets them and nothing below overwrites, so a plugin wrapping this
+ * SDK keeps its own identity. X-Mem0-Client is APPEND-ONLY - every layer adds
+ * itself, so the platform sees the whole stack and not just the last speaker.
+ */
+function surfaceHeaders(): Record<string, string> {
+  const env: Record<string, string | undefined> =
+    typeof process !== "undefined" && process.env ? process.env : {};
+  const existing = (env.MEM0_CLIENT_STACK ?? "").trim();
+  const entries = existing
+    ? existing
+        .split(",")
+        .map((part) => part.trim())
+        .filter(Boolean)
+    : [];
+  const headers: Record<string, string> = {
+    "X-Mem0-Client": boundedStack(entries, `mem0-js/${SDK_VERSION}`),
+  };
+  const source = (env.MEM0_SOURCE ?? "").trim();
+  if (source) headers["X-Mem0-Source"] = source;
+  const application = (env.MEM0_APPLICATION ?? "").trim();
+  if (application) headers["X-Application"] = application;
+  return headers;
 }
 
 export default class MemoryClient {
   apiKey: string;
   host: string;
-  organizationName: string | null;
-  projectName: string | null;
-  organizationId: string | number | null;
-  projectId: string | number | null;
+  private organizationId: string | number | null;
+  private projectId: string | number | null;
   headers: Record<string, string>;
   client: any;
   telemetryId: string;
+  private initialized: Promise<void>;
+  private identityCacheMax: number;
 
   _validateApiKey(): any {
     if (!this.apiKey) {
@@ -57,39 +216,18 @@ export default class MemoryClient {
     }
   }
 
-  _validateOrgProject(): void {
-    // Check for organizationName/projectName pair
-    if (
-      (this.organizationName === null && this.projectName !== null) ||
-      (this.organizationName !== null && this.projectName === null)
-    ) {
-      console.warn(
-        "Warning: Both organizationName and projectName must be provided together when using either. This will be removed from version 1.0.40. Note that organizationName/projectName are being deprecated in favor of organizationId/projectId.",
-      );
-    }
-
-    // Check for organizationId/projectId pair
-    if (
-      (this.organizationId === null && this.projectId !== null) ||
-      (this.organizationId !== null && this.projectId === null)
-    ) {
-      console.warn(
-        "Warning: Both organizationId and projectId must be provided together when using either. This will be removed from version 1.0.40.",
-      );
-    }
-  }
-
   constructor(options: ClientOptions) {
     this.apiKey = options.apiKey;
     this.host = options.host || "https://api.mem0.ai";
-    this.organizationName = options.organizationName || null;
-    this.projectName = options.projectName || null;
-    this.organizationId = options.organizationId || null;
-    this.projectId = options.projectId || null;
+    this.organizationId = null;
+    this.projectId = null;
+    this.identityCacheMax =
+      options.identityCacheMax ?? IDENTITY_CACHE_MAX_DEFAULT;
 
     this.headers = {
       Authorization: `Token ${this.apiKey}`,
       "Content-Type": "application/json",
+      ...surfaceHeaders(),
     };
 
     this.client = axios.create({
@@ -100,27 +238,53 @@ export default class MemoryClient {
 
     this._validateApiKey();
 
-    // Initialize with a temporary ID that will be updated
     this.telemetryId = "";
 
-    // Initialize the client
-    this._initializeClient();
+    // Memory requests never wait on this; telemetry and _awaitIdentity do.
+    this.initialized = this._resolveIdentity();
   }
 
-  private async _initializeClient() {
+  // One ping per credential pair per process, shared via identityByCredentials.
+  private _resolveIdentity(): Promise<void> {
+    const credentials = `${this.host}\u0000${this.apiKey}`;
+    let shared = identityByCredentials.get(credentials);
+    if (!shared) {
+      shared = this._initializeClient();
+      if (identityByCredentials.size >= this.identityCacheMax) {
+        identityByCredentials.delete(
+          identityByCredentials.keys().next().value!,
+        );
+      }
+      identityByCredentials.set(credentials, shared);
+      // A failed ping must not be cached, or the process never recovers.
+      shared.then((identity) => {
+        if (!identity.telemetryId) identityByCredentials.delete(credentials);
+      });
+    }
+    return shared.then((identity) => {
+      this.telemetryId = identity.telemetryId;
+      if (identity.organizationId != null)
+        this.organizationId = identity.organizationId;
+      if (identity.projectId != null) this.projectId = identity.projectId;
+    });
+  }
+
+  // Blocks until the ping has populated organizationId/projectId.
+  private async _awaitIdentity(): Promise<void> {
+    await this.initialized;
+  }
+
+  private async _initializeClient(): Promise<ClientIdentity> {
     try {
-      // Generate telemetry ID
       await this.ping();
 
       if (!this.telemetryId) {
         this.telemetryId = generateHash(this.apiKey);
       }
 
-      this._validateOrgProject();
+      await this._maybeAliasAnonToEmail();
 
-      // Capture initialization event
       captureClientEvent("init", this, {
-        api_version: "v1",
         client_type: "MemoryClient",
       }).catch((error: any) => {
         console.error("Failed to capture event:", error);
@@ -132,19 +296,55 @@ export default class MemoryClient {
         stack: error?.stack || "No stack trace",
       });
     }
+
+    return {
+      telemetryId: this.telemetryId,
+      organizationId: this.organizationId,
+      projectId: this.projectId,
+    };
+  }
+
+  private async _maybeAliasAnonToEmail(): Promise<void> {
+    if (!isTelemetryEnabled()) return;
+    try {
+      const email = this.telemetryId;
+      if (!email || !email.includes("@")) return;
+      const sharedAnonId = await getOrCreateMem0UserId();
+      const anonIds = await readMem0AnonIds();
+      if (!anonIds && !sharedAnonId) return;
+      const candidates = [anonIds?.oss || sharedAnonId, anonIds?.cli].filter(
+        (id): id is string => !!id && id !== email,
+      );
+      const seen = new Set<string>();
+      for (const anonId of candidates) {
+        if (seen.has(anonId) || (await isMem0Aliased(anonId, email))) continue;
+        seen.add(anonId);
+        if (await telemetry.captureIdentify(anonId, email)) {
+          await markMem0Aliased(anonId, email);
+        }
+      }
+    } catch (error: any) {
+      console.error("Failed to alias telemetry identity:", error);
+    }
   }
 
   private _captureEvent(methodName: string, args: any[]) {
-    captureClientEvent(methodName, this, {
-      success: true,
-      args_count: args.length,
-      keys: args.length > 0 ? args[0] : [],
-    }).catch((error: any) => {
-      console.error("Failed to capture event:", error);
-    });
+    // Deferred until ping() has resolved telemetryId, off the request path.
+    this.initialized
+      .then(() =>
+        captureClientEvent(methodName, this, {
+          success: true,
+          args_count: args.length,
+          keys: args.length > 0 ? args[0] : [],
+        }),
+      )
+      .catch((error: any) => {
+        console.error("Failed to capture event:", error);
+      });
   }
 
-  async _fetchWithErrorHandling(url: string, options: any): Promise<any> {
+  /** Fetch with no key conversion, for payloads carrying user-controlled property names. */
+  async _fetchRawJson(url: string, options: any): Promise<any> {
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -155,19 +355,25 @@ export default class MemoryClient {
     });
     if (!response.ok) {
       const errorData = await response.text();
-      throw new APIError(`API request failed: ${errorData}`);
+      throw createExceptionFromResponse(response.status, errorData);
     }
-    const jsonResponse = await response.json();
-    return jsonResponse;
+    return response.json();
   }
 
-  _preparePayload(messages: Array<Message>, options: MemoryOptions): object {
+  async _fetchWithErrorHandling(url: string, options: any): Promise<any> {
+    return snakeToCamelKeys(await this._fetchRawJson(url, options));
+  }
+
+  _preparePayload(
+    messages: Array<Message>,
+    options: Record<string, any>,
+  ): object {
     const payload: any = {};
     payload.messages = messages;
-    return { ...payload, ...options };
+    return camelToSnakeKeys({ ...payload, ...options });
   }
 
-  _prepareParams(options: MemoryOptions): object {
+  _prepareParams(options: Record<string, any>): object {
     return Object.fromEntries(
       Object.entries(options).filter(([_, v]) => v != null),
     );
@@ -193,15 +399,14 @@ export default class MemoryClient {
         throw new APIError(response.message || "API Key is invalid");
       }
 
-      const { org_id, project_id, user_email } = response;
+      const { orgId, projectId, userEmail } = response;
 
-      // Only update if values are actually present
-      if (org_id && !this.organizationId) this.organizationId = org_id;
-      if (project_id && !this.projectId) this.projectId = project_id;
-      if (user_email) this.telemetryId = user_email;
+      if (orgId) this.organizationId = orgId;
+      if (projectId) this.projectId = projectId;
+      if (userEmail) this.telemetryId = userEmail;
     } catch (error: any) {
-      // Convert generic errors to APIError with meaningful messages
-      if (error instanceof APIError) {
+      // Pass through structured exceptions and APIError
+      if (error instanceof MemoryError || error instanceof APIError) {
         throw error;
       } else {
         throw new APIError(
@@ -213,35 +418,20 @@ export default class MemoryClient {
 
   async add(
     messages: Array<Message>,
-    options: MemoryOptions & Record<string, any> = {},
+    options: AddMemoryOptions & Record<string, any> = {},
   ): Promise<Array<Memory>> {
-    if (this.telemetryId === "") await this.ping();
-    this._validateOrgProject();
-    if (this.organizationName != null && this.projectName != null) {
-      options.org_name = this.organizationName;
-      options.project_name = this.projectName;
+    // Tightly scoped validation guard to resolve #5465
+    if (!messages || (Array.isArray(messages) && messages.length === 0)) {
+      throw new Error("Cannot process an empty messages payload.");
     }
-
-    if (this.organizationId != null && this.projectId != null) {
-      options.org_id = this.organizationId;
-      options.project_id = this.projectId;
-
-      if (options.org_name) delete options.org_name;
-      if (options.project_name) delete options.project_name;
-    }
-
-    if (options.api_version) {
-      options.version = options.api_version.toString() || "v2";
-    }
+    rejectFilters(options, "add");
 
     const payload = this._preparePayload(messages, options);
-
-    // get payload keys whose value is not null or undefined
     const payloadKeys = Object.keys(payload);
     this._captureEvent("add", [payloadKeys]);
 
     const response = await this._fetchWithErrorHandling(
-      `${this.host}/v1/memories/`,
+      `${this.host}/v3/memories/add/`,
       {
         method: "POST",
         headers: this.headers,
@@ -253,24 +443,40 @@ export default class MemoryClient {
 
   async update(
     memoryId: string,
-    { text, metadata }: { text?: string; metadata?: Record<string, any> },
+    {
+      text,
+      metadata,
+      timestamp,
+      expirationDate,
+    }: {
+      text?: string;
+      metadata?: Record<string, any>;
+      timestamp?: number | string;
+      expirationDate?: string | null;
+    },
   ): Promise<Array<Memory>> {
-    if (text === undefined && metadata === undefined) {
-      throw new Error("Either text or metadata must be provided for update.");
+    if (
+      text === undefined &&
+      metadata === undefined &&
+      timestamp === undefined &&
+      expirationDate === undefined
+    ) {
+      throw new Error(
+        "At least one of text, metadata, timestamp, or expirationDate must be provided for update.",
+      );
     }
 
-    if (this.telemetryId === "") await this.ping();
-    this._validateOrgProject();
-    const payload = {
-      text: text,
-      metadata: metadata,
-    };
+    const payload: Record<string, any> = {};
+    if (text !== undefined) payload.text = text;
+    if (metadata !== undefined) payload.metadata = metadata;
+    if (timestamp !== undefined) payload.timestamp = timestamp;
+    if (expirationDate !== undefined) payload.expiration_date = expirationDate;
 
     const payloadKeys = Object.keys(payload);
     this._captureEvent("update", [payloadKeys]);
 
     const response = await this._fetchWithErrorHandling(
-      `${this.host}/v1/memories/${memoryId}/`,
+      `${this.host}/v1/memories/${encodePathSegment(memoryId)}/`,
       {
         method: "PUT",
         headers: this.headers,
@@ -281,90 +487,59 @@ export default class MemoryClient {
   }
 
   async get(memoryId: string): Promise<Memory> {
-    if (this.telemetryId === "") await this.ping();
     this._captureEvent("get", []);
     return this._fetchWithErrorHandling(
-      `${this.host}/v1/memories/${memoryId}/`,
+      `${this.host}/v1/memories/${encodePathSegment(memoryId)}/`,
       {
         headers: this.headers,
       },
     );
   }
 
-  async getAll(options?: SearchOptions): Promise<Array<Memory>> {
-    if (this.telemetryId === "") await this.ping();
-    this._validateOrgProject();
+  async getAll(options?: GetAllMemoryOptions): Promise<PaginatedMemories> {
+    // Reject top-level entity params - must use filters instead
+    rejectTopLevelEntityParams(options as Record<string, any>, "getAll");
+
     const payloadKeys = Object.keys(options || {});
     this._captureEvent("get_all", [payloadKeys]);
-    const { api_version, page, page_size, ...otherOptions } = options!;
-    if (this.organizationName != null && this.projectName != null) {
-      otherOptions.org_name = this.organizationName;
-      otherOptions.project_name = this.projectName;
-    }
+    const { page, pageSize, filters, ...rest } = options ?? {};
+    const body: Record<string, any> = {
+      ...camelToSnakeKeys(rest),
+      ...(filters && { filters }),
+    };
 
-    let appendedParams = "";
-    let paginated_response = false;
+    const queryParams: string[] = [];
+    if (page !== undefined) queryParams.push(`page=${page}`);
+    if (pageSize !== undefined) queryParams.push(`page_size=${pageSize}`);
+    const url = `${this.host}/v3/memories/${queryParams.length ? `?${queryParams.join("&")}` : ""}`;
 
-    if (page && page_size) {
-      appendedParams += `page=${page}&page_size=${page_size}`;
-      paginated_response = true;
-    }
-
-    if (this.organizationId != null && this.projectId != null) {
-      otherOptions.org_id = this.organizationId;
-      otherOptions.project_id = this.projectId;
-
-      if (otherOptions.org_name) delete otherOptions.org_name;
-      if (otherOptions.project_name) delete otherOptions.project_name;
-    }
-
-    if (api_version === "v2") {
-      let url = paginated_response
-        ? `${this.host}/v2/memories/?${appendedParams}`
-        : `${this.host}/v2/memories/`;
-      return this._fetchWithErrorHandling(url, {
-        method: "POST",
-        headers: this.headers,
-        body: JSON.stringify(otherOptions),
-      });
-    } else {
-      // @ts-ignore
-      const params = new URLSearchParams(this._prepareParams(otherOptions));
-      const url = paginated_response
-        ? `${this.host}/v1/memories/?${params}&${appendedParams}`
-        : `${this.host}/v1/memories/?${params}`;
-      return this._fetchWithErrorHandling(url, {
-        headers: this.headers,
-      });
-    }
+    const response = await this._fetchWithErrorHandling(url, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify(body),
+    });
+    return response;
   }
 
   async search(
     query: string,
-    options?: SearchOptions & Record<string, any>,
-  ): Promise<Array<Memory>> {
-    if (this.telemetryId === "") await this.ping();
-    this._validateOrgProject();
+    options?: SearchMemoryOptions,
+  ): Promise<{ results: Array<Memory> }> {
+    // Reject top-level entity params - must use filters instead
+    rejectTopLevelEntityParams(options as Record<string, any>, "search");
+
     const payloadKeys = Object.keys(options || {});
     this._captureEvent("search", [payloadKeys]);
-    const { api_version, ...otherOptions } = options!;
-    const payload = { query, ...otherOptions };
-    if (this.organizationName != null && this.projectName != null) {
-      payload.org_name = this.organizationName;
-      payload.project_name = this.projectName;
-    }
+    const { filters, ...rest } = options ?? {};
+    const payload: Record<string, any> = {
+      query,
+      output_format: "v1.1",
+      ...camelToSnakeKeys(rest),
+      ...(filters && { filters }),
+    };
 
-    if (this.organizationId != null && this.projectId != null) {
-      payload.org_id = this.organizationId;
-      payload.project_id = this.projectId;
-
-      if (payload.org_name) delete payload.org_name;
-      if (payload.project_name) delete payload.project_name;
-    }
-    const endpoint =
-      api_version === "v2" ? "/v2/memories/search/" : "/v1/memories/search/";
     const response = await this._fetchWithErrorHandling(
-      `${this.host}${endpoint}`,
+      `${this.host}/v3/memories/search/`,
       {
         method: "POST",
         headers: this.headers,
@@ -374,11 +549,16 @@ export default class MemoryClient {
     return response;
   }
 
-  async delete(memoryId: string): Promise<{ message: string }> {
-    if (this.telemetryId === "") await this.ping();
-    this._captureEvent("delete", []);
+  async delete(
+    memoryId: string,
+    options: DeleteMemoryOptions = {},
+  ): Promise<{ message: string }> {
+    this._captureEvent("delete", [Object.keys(options || {})]);
+    const snakeOptions = camelToSnakeKeys(this._prepareParams(options));
+    // @ts-ignore
+    const query = new URLSearchParams(snakeOptions).toString();
     return this._fetchWithErrorHandling(
-      `${this.host}/v1/memories/${memoryId}/`,
+      `${this.host}/v1/memories/${encodePathSegment(memoryId)}/${query ? `?${query}` : ""}`,
       {
         method: "DELETE",
         headers: this.headers,
@@ -386,25 +566,16 @@ export default class MemoryClient {
     );
   }
 
-  async deleteAll(options: MemoryOptions = {}): Promise<{ message: string }> {
-    if (this.telemetryId === "") await this.ping();
-    this._validateOrgProject();
+  async deleteAll(
+    options: DeleteAllMemoryOptions = {},
+  ): Promise<{ message: string }> {
+    rejectFilters(options, "deleteAll");
+    rejectBlankEntityIds(options);
     const payloadKeys = Object.keys(options || {});
     this._captureEvent("delete_all", [payloadKeys]);
-    if (this.organizationName != null && this.projectName != null) {
-      options.org_name = this.organizationName;
-      options.project_name = this.projectName;
-    }
-
-    if (this.organizationId != null && this.projectId != null) {
-      options.org_id = this.organizationId;
-      options.project_id = this.projectId;
-
-      if (options.org_name) delete options.org_name;
-      if (options.project_name) delete options.project_name;
-    }
+    const snakeOptions = camelToSnakeKeys(this._prepareParams(options));
     // @ts-ignore
-    const params = new URLSearchParams(this._prepareParams(options));
+    const params = new URLSearchParams(snakeOptions);
     const response = await this._fetchWithErrorHandling(
       `${this.host}/v1/memories/?${params}`,
       {
@@ -416,10 +587,9 @@ export default class MemoryClient {
   }
 
   async history(memoryId: string): Promise<Array<MemoryHistory>> {
-    if (this.telemetryId === "") await this.ping();
     this._captureEvent("history", []);
     const response = await this._fetchWithErrorHandling(
-      `${this.host}/v1/memories/${memoryId}/history/`,
+      `${this.host}/v1/memories/${encodePathSegment(memoryId)}/history/`,
       {
         headers: this.headers,
       },
@@ -427,31 +597,19 @@ export default class MemoryClient {
     return response;
   }
 
-  async users(): Promise<AllUsers> {
-    if (this.telemetryId === "") await this.ping();
-    this._validateOrgProject();
+  async users(options?: {
+    page?: number;
+    pageSize?: number;
+  }): Promise<AllUsers> {
     this._captureEvent("users", []);
-    const options: MemoryOptions = {};
-    if (this.organizationName != null && this.projectName != null) {
-      options.org_name = this.organizationName;
-      options.project_name = this.projectName;
-    }
-
-    if (this.organizationId != null && this.projectId != null) {
-      options.org_id = this.organizationId;
-      options.project_id = this.projectId;
-
-      if (options.org_name) delete options.org_name;
-      if (options.project_name) delete options.project_name;
-    }
-    // @ts-ignore
-    const params = new URLSearchParams(options);
-    const response = await this._fetchWithErrorHandling(
-      `${this.host}/v1/entities/?${params}`,
-      {
-        headers: this.headers,
-      },
-    );
+    let url = `${this.host}/v1/entities/`;
+    const params: string[] = [];
+    if (options?.page) params.push(`page=${options.page}`);
+    if (options?.pageSize) params.push(`page_size=${options.pageSize}`);
+    if (params.length) url += `?${params.join("&")}`;
+    const response = await this._fetchWithErrorHandling(url, {
+      headers: this.headers,
+    });
     return response;
   }
 
@@ -462,13 +620,12 @@ export default class MemoryClient {
     entity_id: number;
     entity_type: string;
   }): Promise<{ message: string }> {
-    if (this.telemetryId === "") await this.ping();
     this._captureEvent("delete_user", []);
     if (!data.entity_type) {
       data.entity_type = "user";
     }
     const response = await this._fetchWithErrorHandling(
-      `${this.host}/v1/entities/${data.entity_type}/${data.entity_id}/`,
+      `${this.host}/v1/entities/${encodePathSegment(data.entity_type)}/${encodePathSegment(data.entity_id)}/`,
       {
         method: "DELETE",
         headers: this.headers,
@@ -479,26 +636,24 @@ export default class MemoryClient {
 
   async deleteUsers(
     params: {
-      user_id?: string;
-      agent_id?: string;
-      app_id?: string;
-      run_id?: string;
+      userId?: string;
+      agentId?: string;
+      appId?: string;
+      runId?: string;
     } = {},
   ): Promise<{ message: string }> {
-    if (this.telemetryId === "") await this.ping();
-    this._validateOrgProject();
-
+    rejectBlankEntityIds(params);
     let to_delete: Array<{ type: string; name: string }> = [];
-    const { user_id, agent_id, app_id, run_id } = params;
+    const { userId, agentId, appId, runId } = params;
 
-    if (user_id) {
-      to_delete = [{ type: "user", name: user_id }];
-    } else if (agent_id) {
-      to_delete = [{ type: "agent", name: agent_id }];
-    } else if (app_id) {
-      to_delete = [{ type: "app", name: app_id }];
-    } else if (run_id) {
-      to_delete = [{ type: "run", name: run_id }];
+    if (userId) {
+      to_delete = [{ type: "user", name: userId }];
+    } else if (agentId) {
+      to_delete = [{ type: "agent", name: agentId }];
+    } else if (appId) {
+      to_delete = [{ type: "app", name: appId }];
+    } else if (runId) {
+      to_delete = [{ type: "run", name: runId }];
     } else {
       const entities = await this.users();
       to_delete = entities.results.map((entity) => ({
@@ -511,27 +666,15 @@ export default class MemoryClient {
       throw new Error("No entities to delete");
     }
 
-    const requestOptions: MemoryOptions = {};
-    if (this.organizationName != null && this.projectName != null) {
-      requestOptions.org_name = this.organizationName;
-      requestOptions.project_name = this.projectName;
-    }
-
-    if (this.organizationId != null && this.projectId != null) {
-      requestOptions.org_id = this.organizationId;
-      requestOptions.project_id = this.projectId;
-
-      if (requestOptions.org_name) delete requestOptions.org_name;
-      if (requestOptions.project_name) delete requestOptions.project_name;
-    }
-
-    // Delete each entity and handle errors
     for (const entity of to_delete) {
       try {
-        await this.client.delete(
-          `/v2/entities/${entity.type}/${entity.name}/`,
+        // fetch() reuses the pooled connection; axios here defaulted to
+        // keepAlive: false, one handshake per entity.
+        await this._fetchWithErrorHandling(
+          `${this.host}/v2/entities/${encodePathSegment(entity.type)}/${encodePathSegment(entity.name)}/`,
           {
-            params: requestOptions,
+            method: "DELETE",
+            headers: this.headers,
           },
         );
       } catch (error: any) {
@@ -542,25 +685,18 @@ export default class MemoryClient {
     }
 
     this._captureEvent("delete_users", [
-      {
-        user_id: user_id,
-        agent_id: agent_id,
-        app_id: app_id,
-        run_id: run_id,
-        sync_type: "sync",
-      },
+      { userId, agentId, appId, runId, sync_type: "sync" },
     ]);
 
     return {
       message:
-        user_id || agent_id || app_id || run_id
+        userId || agentId || appId || runId
           ? "Entity deleted successfully."
           : "All users, agents, apps and runs deleted.",
     };
   }
 
   async batchUpdate(memories: Array<MemoryUpdateBody>): Promise<string> {
-    if (this.telemetryId === "") await this.ping();
     this._captureEvent("batch_update", []);
     const memoriesBody = memories.map((memory) => ({
       memory_id: memory.memoryId,
@@ -578,7 +714,6 @@ export default class MemoryClient {
   }
 
   async batchDelete(memories: Array<string>): Promise<string> {
-    if (this.telemetryId === "") await this.ping();
     this._captureEvent("batch_delete", []);
     const memoriesBody = memories.map((memory) => ({
       memory_id: memory,
@@ -595,11 +730,10 @@ export default class MemoryClient {
   }
 
   async getProject(options: ProjectOptions): Promise<ProjectResponse> {
-    if (this.telemetryId === "") await this.ping();
-    this._validateOrgProject();
     const payloadKeys = Object.keys(options || {});
     this._captureEvent("get_project", [payloadKeys]);
     const { fields } = options;
+    await this._awaitIdentity();
 
     if (!(this.organizationId && this.projectId)) {
       throw new Error(
@@ -608,7 +742,7 @@ export default class MemoryClient {
     }
 
     const params = new URLSearchParams();
-    fields?.forEach((field) => params.append("fields", field));
+    fields?.forEach((field) => params.append("fields", camelToSnake(field)));
 
     const response = await this._fetchWithErrorHandling(
       `${this.host}/api/v1/orgs/organizations/${this.organizationId}/projects/${this.projectId}/?${params.toString()}`,
@@ -622,9 +756,8 @@ export default class MemoryClient {
   async updateProject(
     prompts: PromptUpdatePayload,
   ): Promise<Record<string, any>> {
-    if (this.telemetryId === "") await this.ping();
-    this._validateOrgProject();
     this._captureEvent("update_project", []);
+    await this._awaitIdentity();
     if (!(this.organizationId && this.projectId)) {
       throw new Error(
         "organizationId and projectId must be set to update instructions or categories",
@@ -636,7 +769,7 @@ export default class MemoryClient {
       {
         method: "PATCH",
         headers: this.headers,
-        body: JSON.stringify(prompts),
+        body: JSON.stringify(camelToSnakeKeys(prompts)),
       },
     );
     return response;
@@ -644,9 +777,12 @@ export default class MemoryClient {
 
   // WebHooks
   async getWebhooks(data?: { projectId?: string }): Promise<Array<Webhook>> {
-    if (this.telemetryId === "") await this.ping();
     this._captureEvent("get_webhooks", []);
+    if (!data?.projectId) await this._awaitIdentity();
     const project_id = data?.projectId || this.projectId;
+    if (!project_id) {
+      throw new Error("projectId must be set to access webhooks");
+    }
     const response = await this._fetchWithErrorHandling(
       `${this.host}/api/v1/webhooks/projects/${project_id}/`,
       {
@@ -656,33 +792,42 @@ export default class MemoryClient {
     return response;
   }
 
-  async createWebhook(webhook: WebhookPayload): Promise<Webhook> {
-    if (this.telemetryId === "") await this.ping();
+  async createWebhook(webhook: WebhookCreatePayload): Promise<Webhook> {
     this._captureEvent("create_webhook", []);
+    await this._awaitIdentity();
+    if (!this.projectId) {
+      throw new Error("projectId must be set to create a webhook");
+    }
+    const body = {
+      name: webhook.name,
+      url: webhook.url,
+      event_types: webhook.eventTypes,
+    };
     const response = await this._fetchWithErrorHandling(
       `${this.host}/api/v1/webhooks/projects/${this.projectId}/`,
       {
         method: "POST",
         headers: this.headers,
-        body: JSON.stringify(webhook),
+        body: JSON.stringify(body),
       },
     );
     return response;
   }
 
-  async updateWebhook(webhook: WebhookPayload): Promise<{ message: string }> {
-    if (this.telemetryId === "") await this.ping();
+  async updateWebhook(
+    webhook: WebhookUpdatePayload,
+  ): Promise<{ message: string }> {
     this._captureEvent("update_webhook", []);
-    const project_id = webhook.projectId || this.projectId;
+    const body: Record<string, any> = {};
+    if (webhook.name != null) body.name = webhook.name;
+    if (webhook.url != null) body.url = webhook.url;
+    if (webhook.eventTypes != null) body.event_types = webhook.eventTypes;
     const response = await this._fetchWithErrorHandling(
       `${this.host}/api/v1/webhooks/${webhook.webhookId}/`,
       {
         method: "PUT",
         headers: this.headers,
-        body: JSON.stringify({
-          ...webhook,
-          projectId: project_id,
-        }),
+        body: JSON.stringify(body),
       },
     );
     return response;
@@ -691,7 +836,6 @@ export default class MemoryClient {
   async deleteWebhook(data: {
     webhookId: string;
   }): Promise<{ message: string }> {
-    if (this.telemetryId === "") await this.ping();
     this._captureEvent("delete_webhook", []);
     const webhook_id = data.webhookId || data;
     const response = await this._fetchWithErrorHandling(
@@ -705,7 +849,6 @@ export default class MemoryClient {
   }
 
   async feedback(data: FeedbackPayload): Promise<{ message: string }> {
-    if (this.telemetryId === "") await this.ping();
     const payloadKeys = Object.keys(data || {});
     this._captureEvent("feedback", [payloadKeys]);
     const response = await this._fetchWithErrorHandling(
@@ -713,33 +856,221 @@ export default class MemoryClient {
       {
         method: "POST",
         headers: this.headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify(camelToSnakeKeys(data)),
       },
     );
     return response;
   }
 
+  /**
+   * Get the memory profile for a single user.
+   *
+   * Branch on `status`, not on an empty `profile`: generation is asynchronous,
+   * so a known user without a profile yet is a normal response.
+   */
+  async getProfile(data: { entityId: string }): Promise<ProfileResponse> {
+    this._captureEvent("get_profile", []);
+    await this._awaitIdentity();
+
+    const response = await this._fetchWithErrorHandling(
+      `${this.host}/v2/entities/user/${encodeURIComponent(data.entityId)}/profile/`,
+      {
+        headers: this.headers,
+      },
+    );
+    return response;
+  }
+
+  /**
+   * Generate or refresh the profile for one user, now.
+   *
+   * Profiles are otherwise built once a user crosses an internal message
+   * threshold, so a new user has none for its first few memories. Returns as
+   * soon as the work is queued: poll {@link getProfile} and branch on `status`.
+   *
+   * Pass `idempotencyKey` and reuse it to retry a lost request without starting
+   * (and being billed for) a second job.
+   */
+  async generateProfile(data: {
+    entityId: string;
+    idempotencyKey?: string;
+  }): Promise<ProfileJobResponse> {
+    this._captureEvent("generate_profile", []);
+    await this._awaitIdentity();
+
+    const response = await this._fetchWithErrorHandling(
+      `${this.host}${PROFILE_JOBS_PATH}`,
+      {
+        method: "POST",
+        headers: {
+          ...this.headers,
+          "Idempotency-Key": data.idempotencyKey ?? uuidv7(),
+        },
+        body: JSON.stringify({
+          operation: "trigger",
+          entity_type: "user",
+          entity_id: data.entityId,
+        }),
+      },
+    );
+    return response;
+  }
+
+  /** Get the profile settings for the current project. */
+  async getProfileSettings(): Promise<ProfileSettingsResponse> {
+    this._captureEvent("get_profile_settings", []);
+    await this._awaitIdentity();
+
+    const raw = await this._fetchRawJson(`${this.host}/v2/profiles/settings/`, {
+      headers: this.headers,
+    });
+    return this._settingsWithVerbatimSchema(raw);
+  }
+
+  /**
+   * The envelope keys are ours; the schema's property names are the customer's.
+   *
+   * Each entity type carries its own schema, so every one has to be restored
+   * from the raw body — otherwise camel-casing rewrites the customer's field
+   * names and a profile comes back under keys they never chose.
+   */
+  private _settingsWithVerbatimSchema(raw: any): ProfileSettingsResponse {
+    const settings = snakeToCamelKeys(raw) as ProfileSettingsResponse;
+    if (!raw || typeof raw !== "object") {
+      return settings;
+    }
+
+    const rawEntities = raw.entities;
+    if (rawEntities && typeof rawEntities === "object") {
+      for (const [entityType, entitySettings] of Object.entries(rawEntities)) {
+        if (
+          entitySettings &&
+          typeof entitySettings === "object" &&
+          "schema" in entitySettings &&
+          settings.entities?.[entityType as ProfileEntityType]
+        ) {
+          settings.entities[entityType as ProfileEntityType]!.schema = (
+            entitySettings as Record<string, any>
+          ).schema;
+        }
+      }
+    }
+
+    return settings;
+  }
+
+  /**
+   * Update profile settings. Only the fields you pass are written.
+   *
+   * `schema` and `customInstructions` are per user and are nested under
+   * `entities` for the API; only `enabled` is project-wide. Sending them flat
+   * is rejected with `Unsupported settings`.
+   */
+  async updateProfileSettings(
+    settings: ProfileSettings,
+  ): Promise<ProfileSettingsResponse> {
+    const payloadKeys = Object.keys(settings || {});
+    this._captureEvent("update_profile_settings", [payloadKeys]);
+    await this._awaitIdentity();
+
+    const { schema, customInstructions, enabled } = settings || {};
+
+    const body: Record<string, any> = {};
+    if (enabled !== undefined) {
+      body.enabled = enabled;
+    }
+
+    const entitySettings: Record<string, any> = {};
+    // The schema's property names are the customer's and must reach the API verbatim.
+    if (schema !== undefined) {
+      entitySettings.schema = schema;
+    }
+    if (customInstructions !== undefined) {
+      entitySettings.custom_instructions = customInstructions;
+    }
+    if (Object.keys(entitySettings).length > 0) {
+      body.entities = { user: entitySettings };
+    }
+
+    const raw = await this._fetchRawJson(`${this.host}/v2/profiles/settings/`, {
+      method: "POST",
+      headers: this.headers,
+      body: JSON.stringify(body),
+    });
+    return this._settingsWithVerbatimSchema(raw);
+  }
+
+  /**
+   * Generate profiles for a few real users, to check a schema.
+   *
+   * Real generations against real memories, and the results are kept: the
+   * profiles are written to those users and count toward usage.
+   */
+  async sampleProfiles(data?: {
+    limit?: number;
+    idempotencyKey?: string;
+  }): Promise<ProfileJobResponse> {
+    this._captureEvent("sample_profiles", []);
+    await this._awaitIdentity();
+
+    const response = await this._fetchWithErrorHandling(
+      `${this.host}${PROFILE_JOBS_PATH}`,
+      {
+        method: "POST",
+        headers: {
+          ...this.headers,
+          "Idempotency-Key": data?.idempotencyKey ?? uuidv7(),
+        },
+        body: JSON.stringify({
+          operation: "sample",
+          // Required: the API refuses a job that does not name an entity kind.
+          entity_type: "user",
+          ...this._prepareParams({ limit: data?.limit }),
+        }),
+      },
+    );
+    return response;
+  }
+
+  /**
+   * Read one generation job. Accepts the `statusUrl` from a create call, or a
+   * bare job id. Prefer `statusUrl` so a route change needs no client update.
+   */
+  async getProfileJob(jobIdOrStatusUrl: string): Promise<ProfileJobStatus> {
+    await this._awaitIdentity();
+
+    const path = jobIdOrStatusUrl.startsWith("/")
+      ? jobIdOrStatusUrl
+      : `${PROFILE_JOBS_PATH}${jobIdOrStatusUrl}/`;
+    return this._fetchWithErrorHandling(`${this.host}${path}`, {
+      method: "GET",
+      headers: this.headers,
+    });
+  }
+
   async createMemoryExport(
     data: CreateMemoryExportPayload,
   ): Promise<{ message: string; id: string }> {
-    if (this.telemetryId === "") await this.ping();
     this._captureEvent("create_memory_export", []);
 
-    // Return if missing filters or schema
     if (!data.filters || !data.schema) {
       throw new Error("Missing filters or schema");
     }
 
-    // Add Org and Project ID
-    data.org_id = this.organizationId?.toString() || null;
-    data.project_id = this.projectId?.toString() || null;
-
+    // filters and schema are user-controlled blobs whose keys must reach the
+    // API verbatim; only the remaining SDK params (e.g. exportInstructions)
+    // get camel->snake conversion. See issue #5593.
+    const { filters, schema, ...rest } = data;
     const response = await this._fetchWithErrorHandling(
       `${this.host}/v1/exports/`,
       {
         method: "POST",
         headers: this.headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...camelToSnakeKeys(rest),
+          filters,
+          schema,
+        }),
       },
     );
 
@@ -749,22 +1080,22 @@ export default class MemoryClient {
   async getMemoryExport(
     data: GetMemoryExportPayload,
   ): Promise<{ message: string; id: string }> {
-    if (this.telemetryId === "") await this.ping();
     this._captureEvent("get_memory_export", []);
 
-    if (!data.memory_export_id && !data.filters) {
-      throw new Error("Missing memory_export_id or filters");
+    if (!data.memoryExportId && !data.filters) {
+      throw new Error("Missing memoryExportId or filters");
     }
 
-    data.org_id = this.organizationId?.toString() || "";
-    data.project_id = this.projectId?.toString() || "";
-
+    const { filters, ...rest } = data;
     const response = await this._fetchWithErrorHandling(
       `${this.host}/v1/exports/get/`,
       {
         method: "POST",
         headers: this.headers,
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...camelToSnakeKeys(rest),
+          ...(filters && { filters }),
+        }),
       },
     );
     return response;

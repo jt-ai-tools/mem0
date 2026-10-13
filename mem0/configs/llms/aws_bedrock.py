@@ -16,7 +16,7 @@ class AWSBedrockConfig(BaseLlmConfig):
         model: Optional[str] = None,
         temperature: float = 0.1,
         max_tokens: int = 2000,
-        top_p: float = 0.9,
+        top_p: Optional[float] = None,
         top_k: int = 1,
         aws_access_key_id: Optional[str] = None,
         aws_secret_access_key: Optional[str] = None,
@@ -24,6 +24,7 @@ class AWSBedrockConfig(BaseLlmConfig):
         aws_session_token: Optional[str] = None,
         aws_profile: Optional[str] = None,
         model_kwargs: Optional[Dict[str, Any]] = None,
+        provider_override: Optional[str] = None,
         **kwargs,
     ):
         """
@@ -33,7 +34,8 @@ class AWSBedrockConfig(BaseLlmConfig):
             model: Bedrock model identifier (e.g., "amazon.nova-3-mini-20241119-v1:0")
             temperature: Controls randomness (0.0 to 2.0)
             max_tokens: Maximum tokens to generate
-            top_p: Nucleus sampling parameter (0.0 to 1.0)
+            top_p: Nucleus sampling (0.0–1.0). Default None omits topP on Converse
+                (required for Anthropic, which rejects temperature and topP together).
             top_k: Top-k sampling parameter (1 to 40)
             aws_access_key_id: AWS access key (optional, uses env vars if not provided)
             aws_secret_access_key: AWS secret key (optional, uses env vars if not provided)
@@ -41,6 +43,10 @@ class AWSBedrockConfig(BaseLlmConfig):
             aws_session_token: AWS session token for temporary credentials
             aws_profile: AWS profile name for credentials
             model_kwargs: Additional model-specific parameters
+            provider_override: Explicit provider name (e.g. "anthropic"), required when
+                model is an application inference profile ARN whose opaque ID has no
+                provider substring for automatic detection. Defaults to None (uses
+                automatic detection from the model identifier).
             **kwargs: Additional arguments passed to base class
         """
         super().__init__(
@@ -58,6 +64,7 @@ class AWSBedrockConfig(BaseLlmConfig):
         self.aws_session_token = aws_session_token
         self.aws_profile = aws_profile
         self.model_kwargs = model_kwargs or {}
+        self.provider_override = provider_override
 
     @property
     def provider(self) -> str:
@@ -75,12 +82,15 @@ class AWSBedrockConfig(BaseLlmConfig):
 
     def get_model_config(self) -> Dict[str, Any]:
         """Get model-specific configuration parameters."""
-        base_config = {
+        base_config: Dict[str, Any] = {
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
-            "top_p": self.top_p,
             "top_k": self.top_k,
         }
+
+        # Only include top_p when explicitly set by the user.
+        if self.top_p is not None:
+            base_config["top_p"] = self.top_p
 
         # Add custom model kwargs
         base_config.update(self.model_kwargs)

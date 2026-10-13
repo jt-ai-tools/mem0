@@ -34,6 +34,8 @@ class VectorStoreConfig(BaseModel):
         "faiss": "FAISSConfig",
         "langchain": "LangchainConfig",
         "s3_vectors": "S3VectorsConfig",
+        "turbopuffer": "TurbopufferConfig",
+        "oracledb": "OracleAIVectorSearchConfig",
     }
 
     @model_validator(mode="after")

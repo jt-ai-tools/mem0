@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import Any, Dict, Optional
+
 from pydantic import Field
 
 from mem0.configs.rerankers.base import BaseRerankerConfig
@@ -9,7 +10,7 @@ class LLMRerankerConfig(BaseRerankerConfig):
     Configuration for LLM-based reranker.
     
     Attributes:
-        model (str): LLM model to use for reranking. Defaults to "gpt-4o-mini".
+        model (str): LLM model to use for reranking. Defaults to "gpt-5-mini".
         api_key (str): API key for the LLM provider.
         provider (str): LLM provider. Defaults to "openai".
         top_k (int): Number of top documents to return after reranking.
@@ -19,7 +20,7 @@ class LLMRerankerConfig(BaseRerankerConfig):
     """
     
     model: str = Field(
-        default="gpt-4o-mini",
+        default="gpt-5-mini",
         description="LLM model to use for reranking"
     )
     api_key: Optional[str] = Field(
@@ -45,4 +46,9 @@ class LLMRerankerConfig(BaseRerankerConfig):
     scoring_prompt: Optional[str] = Field(
         default=None,
         description="Custom prompt template for scoring documents"
+    )
+    llm: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Nested LLM configuration with 'provider' and 'config' keys. "
+        "Overrides top-level provider/model/api_key when provided.",
     )
